@@ -23,4 +23,19 @@ router.get("/allUsers", async (req, res) => {
     res.status(500).send("Error al obtener usuarios");
   }
 });
+
+router.put("/update/:dni", async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.dni);
+    if (user) {
+      await user.update(req.body);
+      res.send(user);
+    } else {
+      res.status(404).send("Usuario no encontrado");
+    }
+  } catch (error) {
+    res.status(500).send("Error al actualizar usuario");
+  }
+});
+
 export default router;
