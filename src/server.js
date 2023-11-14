@@ -2,6 +2,10 @@ import express from "express";
 import morgan from "morgan";
 import sequelize from "./config/database.js";
 
+import "./models/User.js"
+import "./models/Reservation.js"
+import "./models/Branch.js"
+import "./models/Business.js"
 const server = express();
 
 server.use(express.json());
@@ -13,7 +17,7 @@ server.use((err, req, res, next) => {
 });
 
 sequelize
-  .sync({ force: true })
+  .sync({ force: false })
   .then(() => {
     server.listen(3000, () =>
       console.log("Servidor escuchando en el puerto 3000")
