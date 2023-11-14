@@ -27,6 +27,7 @@ User.init(
     },
     email: {
       type: Sequelize.STRING,
+      unique: true,
     },
     contact: {
       type: Sequelize.INTEGER,
