@@ -38,4 +38,19 @@ router.put("/update/:dni", async (req, res) => {
   }
 });
 
+router.put("/changePassword/:dni", async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.dni);
+    if (user) {
+      user.password = req.body.newPassword;
+      await user.save();
+      res.send("Contraseña cambiada correctamente");
+    } else {
+      res.status(404).send("Usuario no encontrado");
+    }
+  } catch (error) {
+    res.status(500).send("Error al cambiar la contraseña del usuario");
+  }
+});
+
 export default router;
