@@ -24,7 +24,7 @@ Valentin Guardia
 
 Dependiendo tu caso busca el codigo para HTTP, SSH o GitHub CLI
 
-Instala las dependencias:
+#Instala las dependencias:
 
 
 cd p5-back-mi-turno
