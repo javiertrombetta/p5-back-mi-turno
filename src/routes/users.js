@@ -1,5 +1,6 @@
 import express from "express";
 import User from "../models/User.js";
+import { postLogin, postLogout } from "../controllers/users.js";
 const router = express.Router();
 
 router.get("/user/:dni", async (req, res) => {
@@ -70,5 +71,9 @@ router.post("/register", async (req, res) => {
     res.status(500).send(`Error al registrarse: ${error.message}`);
   }
 });
+
+router.post("/login", postLogin);
+router.post("/logout", postLogout);
+
 
 export default router;
