@@ -39,4 +39,17 @@ router.post("/create", async (req, res) => {
   }
 });
 
+router.put("/update/:id", async (req, res) => {
+  try {
+    const business = await Business.findByPk(req.params.id);
+    if (business) {
+      await business.update(req.body);
+      res.send(business);
+    } else {
+      res.status(404).send("Empresa no encontrada");
+    }
+  } catch (error) {
+    res.status(500).send("Error al actualizar empresa");
+  }
+});
 export default router;
