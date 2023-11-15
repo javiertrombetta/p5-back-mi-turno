@@ -75,5 +75,4 @@ router.post("/register", async (req, res) => {
 router.post("/login", postLogin);
 router.post("/logout", postLogout);
 
-
 export default router;
