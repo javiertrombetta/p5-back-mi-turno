@@ -53,4 +53,22 @@ router.put("/changePassword/:dni", async (req, res) => {
   }
 });
 
+router.post("/register", async (req, res) => {
+  console.log(req.body);
+  try {
+    const { firstAndLastName, dni, email, password } = req.body;
+    const userExist = await User.findOne({ where: { dni } });
+    if (userExist) throw new Error("DNI existente");
+    const newUser = await User.create({
+      firstAndLastName,
+      dni,
+      email,
+      password,
+    });
+    res.status(201).send(newUser);
+  } catch (error) {
+    res.status(500).send(`Error al registrarse: ${error.message}`);
+  }
+});
+
 export default router;

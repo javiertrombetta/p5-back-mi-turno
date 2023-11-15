@@ -11,12 +11,11 @@ import router from "./routes/index.js";
 // import "./models/Business.js";
 const server = express();
 
-server.use("/", router);
-
+server.use(cookieParser());
 server.use(express.json());
 server.use(morgan("tiny"));
 server.use(express.urlencoded({ extended: true }));
-
+server.use("/", router);
 server.use((err, req, res, next) => {
   res.status(500).send(err.message);
 });
@@ -28,7 +27,6 @@ server.use(
     credentials: true,
   })
 );
-server.use(cookieParser());
 
 sequelize
   .sync({ force: false })
