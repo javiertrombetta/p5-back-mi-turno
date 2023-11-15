@@ -41,4 +41,18 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+router.put("/update/:id", async (req, res) => {
+  try {
+    const branch = await Branch.findByPk(req.params.id);
+    if (branch) {
+      await branch.update(req.body);
+      res.send(branch);
+    } else {
+      res.status(404).send("Sucursal no encontrada");
+    }
+  } catch (error) {
+    res.status(500).send("Error al actualizar sucursal");
+  }
+});
+
 export default router;
