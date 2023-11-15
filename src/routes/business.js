@@ -24,4 +24,19 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+router.post("/create", async (req, res) => {
+  const { name, email, contact, address } = req.body;
+  try {
+    const newBusiness = await Business.create({
+      name,
+      email,
+      contact,
+      address,
+    });
+    res.status(201).send(newBusiness);
+  } catch (error) {
+    res.status(500).send("Error al crear una nueva empresa");
+  }
+});
+
 export default router;
