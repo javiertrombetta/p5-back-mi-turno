@@ -64,6 +64,13 @@ User.beforeCreate((user) => {
     .then((hash) => (user.password = hash));
 });
 
+User.beforeUpdate((user) => {
+  user.salt = genSaltSync(10);
+  return user
+    .hash(user.password, user.salt)
+    .then((hash) => (user.password = hash));
+})
+
 User.hasMany(Reserva);
 Reserva.belongsTo(User);
 
