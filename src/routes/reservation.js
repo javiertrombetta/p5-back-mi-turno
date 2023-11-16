@@ -41,4 +41,18 @@ router.get("/get/:dni", async (req, res) => {
   }
 });
 
+router.put("/update/:id", async (req, res) => {
+  try {
+    const updatedReservation = await Reservation.findByPk(req.params.id);
+    if (updatedReservation) {
+      await updatedReservation.update(req.body);
+      res.status(200).send(updatedReservation);
+    } else {
+      res.status(404).send("Reserva no encontrada");
+    }
+  } catch (error) {
+    res.status(500).send("Error al modificar la reserva");
+  }
+});
+
 export default router;
