@@ -43,7 +43,8 @@ router.put("/changePassword/:dni", async (req, res) => {
   try {
     const user = await User.findByPk(req.params.dni);
     if (user) {
-      user.password = req.body.newPassword;
+
+     user.update(req.body.password)
       await user.save();
       res.send("Contraseña cambiada correctamente");
     } else {
