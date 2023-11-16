@@ -65,6 +65,8 @@ router.post("/register", async (req, res) => {
       dni,
       email,
       password,
+      rol: "oper",
+      //branchId
     });
     res.status(201).send(newUser);
   } catch (error) {
