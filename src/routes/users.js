@@ -1,6 +1,6 @@
 import express from "express";
 import User from "../models/User.js";
-import { postLogin, postLogout } from "../controllers/users.js";
+import { postLogin, postLogout , postCompletePasswordReset, postPasswordReset} from "../controllers/users.js";
 const router = express.Router();
 
 router.get("/user/:dni", async (req, res) => {
@@ -75,6 +75,7 @@ router.post("/register", async (req, res) => {
 
 router.post("/login", postLogin);
 router.post("/logout", postLogout);
-
+router.post("/password-reset", postPasswordReset);
+router.post("/complete-password-reset", postCompletePasswordReset);
 
 export default router;
