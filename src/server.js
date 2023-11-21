@@ -5,10 +5,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import router from "./routes/index.js";
 
-// import "./models/User.js";
-// import "./models/Reservation.js";
-// import "./models/Branch.js";
-// import "./models/Business.js";
+//import "./models/User.js";
+//import "./models/Reservation.js";
+//import "./models/Branch.js";
+//import "./models/Business.js";
 const server = express();
 
 server.use(cookieParser());
