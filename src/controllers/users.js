@@ -1,6 +1,6 @@
-import { generateToken } from "../config/tokens.js";
+import { generateToken, validateToken } from "../config/tokens.js";
 import jwt from "jsonwebtoken";
-
+import nodemailer from 'nodemailer'
 import User from "../models/User.js";
 
 export const getMe = (req, res) => {
@@ -101,7 +101,7 @@ export const postLogout = (req, res) =>{
         service: "Gmail",
         auth: {
           user: "belenbanegasbanegas@gmail.com",
-          pass: "los del espacio",
+          pass: "iian nbwz sjpj iwxp",
         },
       });
 
@@ -137,7 +137,7 @@ export const postCompletePasswordReset = async (req, res) => {
 
   try {
     // Verificamos y decodificamos el token
-    const decoded = jwt.verify(token, "tu_secreto");
+    const decoded = validateToken(token)
 
     // Buscamos al usuario por ID
     const user = await User.findByPk(decoded.userId);
