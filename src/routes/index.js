@@ -9,7 +9,7 @@ import auth from "../middlewares/auth.js";
 
 router.use("/users", usersRouter);
 router.use("/business", businessRouter);
-router.use("/branches", branchesRouter);
+router.use("/branches", branchesRouter);  
 router.use("/reservation", reservationRouter);
 
 router.get("/me", auth, getMe);

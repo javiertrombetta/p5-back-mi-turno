@@ -3,12 +3,14 @@ import Branch from "../models/Branch.js";
 const router = express.Router();
 
 router.post("/create", async (req, res) => {
-  const { name, email, contact, capacity, openingtime, closingtime } = req.body;
+  const { name, email, address, contact, capacity, openingtime, closingtime } =
+    req.body;
   try {
     const newBranch = await Branch.create({
       name,
       email,
       contact,
+      address,
       capacity,
       openingtime,
       closingtime,
