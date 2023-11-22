@@ -26,14 +26,14 @@ Branch.init(
    
     },
     capacity: {
-      type: Sequelize.STRING,
+      type: Sequelize.INTEGER,
       allowNull: false,
     },
     openingtime: {
-      type: Sequelize.STRING,
+      type: Sequelize.INTEGER,
     },
     closingtime: {
-      type: Sequelize.STRING,
+      type: Sequelize.INTEGER,
     }
   },
 
