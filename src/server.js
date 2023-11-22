@@ -5,21 +5,14 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import router from "./routes/index.js";
 
-// import "./models/User.js";
-// import "./models/Reservation.js";
-// import "./models/Branch.js";
-// import "./models/Business.js";
+import "./models/User.js";
+import "./models/Reservation.js";
+import "./models/Branch.js";
+import "./models/Business.js";
 const server = express();
 
 server.use(cookieParser());
 server.use(express.json());
-server.use(morgan("tiny"));
-server.use(express.urlencoded({ extended: true }));
-server.use("/", router);
-server.use((err, req, res, next) => {
-  res.status(500).send(err.message);
-});
-
 //CORS
 server.use(
   cors({
@@ -27,12 +20,18 @@ server.use(
     credentials: true,
   })
 );
+server.use(morgan("tiny"));
+server.use(express.urlencoded({ extended: true }));
+server.use("/", router);
+server.use((err, req, res, next) => {
+  res.status(500).send(err.message);
+});
 
 sequelize
   .sync({ force: false })
   .then(() => {
-    server.listen(3000, () =>
-      console.log("Servidor escuchando en el puerto 3000")
+    server.listen(5000, () =>
+      console.log("Servidor escuchando en el puerto 5000")
     );
   })
   .catch((err) => {
