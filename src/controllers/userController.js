@@ -10,8 +10,7 @@ import { validateName, validateEmail, validatePhone, validateImageFormat } from 
 
 const userController = {
   register: async (req, res) => {
-    const { fullName, dni, email, password } = req.body;
-
+    const { fullName, dni, email, password } = req.body;  
     try {
       const userExist = await User.findOne({ where: { dni } });
       if (userExist) {
@@ -24,6 +23,17 @@ const userController = {
         email,
         password: hashedPassword,
       });
+      const mailOptions = {
+        from: process.env.MAIL_USERNAME,
+        to: newUser.email,
+        subject: 'Bienvenido/a a Mi Turno Web App',
+        html: `<h3>¡Hola, ${newUser.fullName}!</h3>
+              <p>¡Tu cuenta fue creada exitosamente!</p>
+              <p>Ya podés iniciar sesión y empezar a usar la aplicación.</p>
+              <p>Saludos,</p>
+              <p><b>Grupo 6 de Mi Turno Web App</b></p>`
+      };
+      await transporter.sendMail(mailOptions);  
       const userResponse = { ...newUser.toJSON(), password: undefined };
       res.status(201).json(userResponse);
     } 
@@ -31,7 +41,7 @@ const userController = {
       console.error(error);
       res.status(500).json({ message: "Error al registrar el usuario" });
     }
-  },
+  },  
   login: async (req, res) => {
     const { email, password } = req.body;
     try {
@@ -132,7 +142,7 @@ const userController = {
               <p><a href="${resetUrl}">Hacé clic sobre este mismo link</a></p>
               <p>Si no solicitaste restablecer tu contraseña, por favor ignorá este correo electrónico.</p>
               <p>Saludos,</p>
-              <p><b>Equipo de Mi Turno Web App</b></p>`
+              <p><b>Grupo 6 de Mi Turno Web App</b></p>`
       };
       await transporter.sendMail(mailOptions);
       res.json({ message: 'Se envió un correo electrónico con instrucciones para restablecer la contraseña.' });
@@ -168,7 +178,7 @@ const userController = {
               <p>Si no hiciste este cambio de contraseña, por favor comunicate con nuestro equipo de soporte.</p>
               <p>Si realizaste este cambio, no es necesario que realices ninguna otra acción.</p>
               <p>Saludos,</p>
-              <p><b>Equipo de Mi Turno Web App</b></p>`
+              <p><b>Grupo 6 de Mi Turno Web App</b></p>`
       };
       await transporter.sendMail(confirmMailOptions);
       res.json({ message: 'Contraseña actualizada con éxito.' });
@@ -260,10 +270,10 @@ const userController = {
               <p><a href="${resetUrl}">Hacé clic sobre este mismo link</a></p>
               <p>Si no solicitaste restablecer tu contraseña, por favor ignorá este correo electrónico.</p>
               <p>Saludos,</p>
-              <p><b>Equipo de Mi Turno Web App</b></p>`            
+              <p><b>Grupo 6 de Mi Turno Web App</b></p>`            
         };
         await transporter.sendMail(mailOptions);
-        res.json({ message: 'Se ha enviado un correo electrónico con instrucciones para restablecer la contraseña.' });
+        res.json({ message: 'Se envió un correo electrónico con instrucciones para restablecer la contraseña.' });
     }
     catch (error) {
       console.error(error);
@@ -342,7 +352,7 @@ const userController = {
         return res.status(403).json({ message: 'Solo los administradores pueden realizar esta acción' });
       }
       if (adminUser.Business.id !== userToDepromote.Branches[0].Business.id) {
-        return res.status(403).json({ message: 'No puedes depromocionar a un operador de otra empresa' });
+        return res.status(403).json({ message: 'No podés depromocionar a un operador de otra empresa' });
       }
       userToDepromote.role = 'user';
       userToDepromote.branchId = null;
@@ -376,7 +386,7 @@ const userController = {
         user.businessId = businessId;
       }
       await user.save();
-      res.json({ message: `El rol del usuario ha sido actualizado a ${newRole}` });
+      res.json({ message: `El rol del usuario fue actualizado a ${newRole}` });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });
@@ -420,10 +430,10 @@ const userController = {
               <p><a href="${resetUrl}">Hacé clic en este mismo link</a></p>
               <p>Si no solicitaste crear una contraseña, por favor ignorá este correo electrónico.</p>
               <p>Saludos,</p>
-              <p><b>Equipo de Mi Turno Web App</b></p>`
+              <p><b>Grupo 6 de Mi Turno Web App</b></p>`
       };
       await transporter.sendMail(mailOptions);
-      res.status(201).json({ message: 'Usuario creado exitosamente. Se envió un correo para establecer la contraseña.' });
+      res.status(201).json({ message: 'Usuario creado exitosamente. Se envió un correoa tu cuenta para establecer la contraseña.' });
     } 
     catch (error) {
       console.error(error);
