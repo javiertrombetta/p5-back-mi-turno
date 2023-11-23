@@ -4,12 +4,18 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import sequelize from "./config/database.js";
 import router from "./routes/index.js";
+import { config } from "dotenv";
 
+config();
 
+const forceSync = true;
 const server = express();
-server.use(cors({
-  origin: "http://localhost:3000",
-  credentials: true
+const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:3001"; 
+const serverPort = process.env.SERVER_PORT || 3000;
+
+server.use(cors({ 
+  orgin: corsOrigin, 
+  credentials: true 
 }));
 server.use(cookieParser());
 server.use(express.json());
@@ -21,11 +27,11 @@ server.use((err, req, res, next) => {
   res.status(500).send(err.message);
 });
 sequelize
-.sync({ force: false })
+.sync({ force: forceSync })
 .then(() => {
-  console.log("Base de datos sincronizada");
-  server.listen(3000, () => {
-    console.log("Servidor escuchando en el puerto 3000");
+  console.log(`Base de datos sincronizada (force: ${forceSync ? 'TRUE' : 'FALSE'})`);
+  server.listen(serverPort, () => {
+    console.log(`Servidor escuchando en el puerto ${serverPort}`);
   });
 })
 .catch((err) => {
