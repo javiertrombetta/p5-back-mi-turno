@@ -1,4 +1,7 @@
 import Branch from "../models/Branch.js";
+import Business from "../models/Business.js";
+import User from "../models/User.js";
+
 import { validateName, validateEmail, validatePhone, validateAddress, validateCapacity, validateTime } from '../utils/validations.js';
 
 const branchesController = {
