@@ -1,10 +1,10 @@
+import Sequelize from "sequelize";
 import Reservation from "../models/Reservation.js";
 import User from "../models/User.js";
 import Branch from "../models/Branch.js";
 import Business from "../models/Business.js";
 
 import { transporter } from "../config/mailTransporter.js";
-import Sequelize from "sequelize";
 
 const reservationController = {
   createReservation: async (req, res) => {

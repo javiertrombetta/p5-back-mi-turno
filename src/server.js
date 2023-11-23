@@ -5,15 +5,16 @@ import cookieParser from "cookie-parser";
 import sequelize from "./config/database.js";
 import router from "./routes/index.js";
 
+
 const server = express();
-server.use(cookieParser());
-server.use(express.json());
-server.use(morgan("tiny"));
-server.use(express.urlencoded({ extended: true }));
 server.use(cors({
   origin: "http://localhost:3000",
   credentials: true
 }));
+server.use(cookieParser());
+server.use(express.json());
+server.use(morgan("tiny"));
+server.use(express.urlencoded({ extended: true }));
 server.use("/", router);
 server.use((err, req, res, next) => {
   console.error(err);

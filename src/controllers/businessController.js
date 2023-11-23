@@ -1,5 +1,6 @@
 import Business from "../models/Business.js";
 import Branch from "../models/Branch.js";
+
 import { validateName, validateEmail, validatePhone } from '../utils/validations.js';
 
 const businessController = {  
