@@ -16,12 +16,15 @@ Branch.init(
     },
     email: {
       type: Sequelize.STRING,
+      allowNull: false,
     },
     phoneNumber: {
       type: Sequelize.INTEGER,
+      allowNull: false,
     },
     address: {
       type: Sequelize.STRING,
+      allowNull: false,
     },
     capacity: {
       type: Sequelize.INTEGER,
@@ -29,12 +32,14 @@ Branch.init(
     },
     openingTime: {
       type: Sequelize.STRING,
+      allowNull: false,
     },
     closingTime: {
       type: Sequelize.STRING,
-    }
+      allowNull: false,
+    },
   },
-  { sequelize: sequelize, modelName: "branches" }
+  { sequelize: sequelize, modelName: "branches", timestamps: false }
 );
 
 export default Branch;
