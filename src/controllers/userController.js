@@ -1,5 +1,8 @@
+import Sequelize from "sequelize";
 import User from "../models/User.js";
 import Branch from "../models/Branch.js";
+import Business from "../models/Business.js";
+
 import bcrypt from "bcrypt";
 import { generateToken } from "../config/tokens.js";
 import { transporter } from '../config/mailTransporter.js';

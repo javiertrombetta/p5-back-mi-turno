@@ -25,7 +25,7 @@ Business.init(
       allowNull: false,
     }
   },
-  { sequelize: sequelize, modelName: "business" }
+  { sequelize: sequelize, modelName: "businesses" }
 );
 
 export default Business;
