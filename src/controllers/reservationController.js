@@ -28,12 +28,17 @@ const reservationController = {
         to: req.user.email,
         subject: 'Confirmación de Reserva',
         html: `<h3>Hola ${req.user.fullName},</h3>
-              <p>Tu reserva ha sido creada con éxito:</p>
+              <p>Tu reserva se creó con éxito:</p>
               <ul>
               <li>Fecha: ${date}</li>
               <li>Hora: ${time}</li>
               <li>Sucursal: ${branchId}</li>
-              </ul>`
+              </ul>
+              <p>Su estado actual es: <b>PENDIENTE</b></p>
+              <p>¡Gracias por utilizar nuestro servicio!</p>
+              <p>Saludos cordiales,</p>
+              <p><b>Grupo 6 de Mi Turno Web App</b></p>`
+
       };
 
       await transporter.sendMail(mailOptions);
