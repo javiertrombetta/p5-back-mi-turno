@@ -22,10 +22,6 @@ User.init({
   role: {
     type: Sequelize.ENUM("super", "admin", "oper", "user"),
     defaultValue: "user",
-  },
-  password: {
-    type: Sequelize.STRING,
-    allowNull: false,
   },  
   photo: {
     type: Sequelize.STRING,
@@ -35,8 +31,35 @@ User.init({
     type: Sequelize.DATE,
     allowNull: true,
   },
+  password: {
+    type: Sequelize.STRING,
+    allowNull: false,
+  },  
+  resetPasswordToken: {
+    type: Sequelize.STRING,
+    allowNull: true,
+  },
+  resetPasswordExpires: {
+    type: Sequelize.DATE,
+    allowNull: true,
+  },
+  businessId: {
+    type: Sequelize.INTEGER,
+    references: {
+      model: 'Business',
+      key: 'id'
+    },
+    allowNull: true
+  },
+  branchId: {
+    type: Sequelize.INTEGER,
+    references: {
+      model: 'Branch',
+      key: 'id'
+    },
+    allowNull: true
+  }
 }, 
 { sequelize: sequelize, modelName: "users" });
 
 export default User;
-
