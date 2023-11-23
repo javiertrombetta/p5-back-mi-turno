@@ -19,7 +19,7 @@ Reservation.init({
     allowNull: false,
   },
   state: {
-    type: Sequelize.ENUM("pendiente", "confirmado", "cancelado", "asistio", "ausente"),
+    type: Sequelize.ENUM("pendiente", "confirmado", "cancelado", "finalizado", "ausente"),
     defaultValue: "pendiente",
   }
 }, 

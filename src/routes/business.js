@@ -1,15 +1,16 @@
 import express from 'express';
 import businessController from '../controllers/businessController.js';
 import auth from '../middlewares/auth.js';
-import { checkAdminRole } from '../middlewares/rolesMiddleware.js';
+import { checkAdminRole, checkSuperRole } from '../middlewares/rolesMiddleware.js';
 
 const router = express.Router();
 
-router.post('/create', auth, checkAdminRole, businessController.createBusiness);
-router.get('/all', auth, businessController.getAllBusinesses);
-router.get('/:id', auth, businessController.getBusinessById);
-router.put('/update/:id', auth, checkAdminRole, businessController.updateBusiness);
+// Super
+router.post('/create', auth, checkSuperRole, businessController.createBusiness);
+router.put('/update/:id', auth, checkSuperRole, businessController.updateBusiness);
+router.delete('/:id', auth, checkSuperRole, businessController.deleteBusiness);
+// Super | Admin
+router.get('/all', auth, checkAdminRole, businessController.getAllBusinesses);
+router.get('/:id', auth, checkAdminRole, businessController.getBusinessById);
 
 export default router;
-
-

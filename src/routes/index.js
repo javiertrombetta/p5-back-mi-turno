@@ -12,5 +12,3 @@ router.use('/branches', branchesRouter);
 router.use('/reservations', reservationRouter);
 
 export default router;
-
-
