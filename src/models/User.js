@@ -46,7 +46,7 @@ User.init({
   businessId: {
     type: Sequelize.INTEGER,
     references: {
-      model: 'Business',
+      model: 'businesses',
       key: 'id'
     },
     allowNull: true
@@ -54,7 +54,7 @@ User.init({
   branchId: {
     type: Sequelize.INTEGER,
     references: {
-      model: 'Branch',
+      model: 'branches',
       key: 'id'
     },
     allowNull: true

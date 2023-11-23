@@ -1,11 +1,9 @@
 const db = require('../config/database');
+const Business = require('./Business');
 const User = require('./User');
 const Reservation = require('./Reservation');
-const Business = require('./Business');
 const Branch = require('./Branch');
 
-Business.hasMany(Branch, { foreignKey: 'businessId' });
-Business.hasMany(User, { foreignKey: 'businessId' });
 Branch.belongsTo(Business, { foreignKey: 'businessId' });
 Branch.hasMany(Reservation, { foreignKey: 'branchId' });
 Branch.hasMany(User, { foreignKey: 'branchId' });
@@ -16,12 +14,13 @@ User.hasMany(Reservation, { foreignKey: 'userId' });
 User.belongsToMany(Branch, { through: 'UserBranches', foreignKey: 'userId' });
 User.belongsTo(Business, { foreignKey: 'businessId' });
 User.belongsTo(Branch, { foreignKey: 'branchId' });
-
+Business.hasMany(Branch, { foreignKey: 'businessId' });
+Business.hasMany(User, { foreignKey: 'businessId' });
 
 module.exports = {
   db,
-  User,
-  Reservation,
   Business,
+  User,
+  Reservation,  
   Branch
 };
