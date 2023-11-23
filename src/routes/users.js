@@ -1,83 +1,28 @@
-import express from "express";
-import User from "../models/User.js";
-import { postLogin, postLogout , postCompletePasswordReset, postPasswordReset} from "../controllers/users.js";
+import express from 'express';
+import userController from '../controllers/userController.js';
+import auth from '../middlewares/auth.js';
+import { checkSuperRole, checkAdminRole } from '../middlewares/rolesMiddleware.js';
+
 const router = express.Router();
 
-router.get("/user/:dni", async (req, res) => {
-  try {
-    const user = await User.findByPk(req.params.dni);
-    if (user) {
-      res.send(user);
-    } else {
-      res.status(404).json("Usuario no encontrado");
-    }
-  } catch (error) {
-    res.status(500).json("Error al buscar usuario");
-  }
-});
-
-router.get("/allUsers", async (req, res) => {
-  try {
-    const allUsers = await User.findAll();
-    res.send(allUsers);
-  } catch (error) {
-    res.status(500).send("Error al obtener usuarios");
-  }
-});
-
-router.put("/update/:dni", async (req, res) => {
-  try {
-    const user = await User.findByPk(req.params.dni);
-    if (user) {
-      await user.update(req.body);
-      res.send(user);
-    } else {
-      res.status(404).send("Usuario no encontrado");
-    }
-  } catch (error) {
-    res.status(500).send("Error al actualizar usuario");
-  }
-});
-
-router.put("/changePassword/:dni", async (req, res) => {
-  try {
-    const user = await User.findByPk(req.params.dni);
-    if (user) {
-
-     user.update(req.body.password)
-      await user.save();
-      res.send("Contraseña cambiada correctamente");
-    } else {
-      res.status(404).send("Usuario no encontrado");
-    }
-  } catch (error) {
-    res.status(500).send("Error al cambiar la contraseña del usuario");
-  }
-});
-
-router.post("/register", async (req, res) => {
-  console.log(req.body);
-  try {
-    const { firstAndLastName, dni, email, password } = req.body;
-    const userExist = await User.findOne({ where: { dni } });
-    if (userExist) throw new Error("DNI existente");
-    const newUser = await User.create({
-      firstAndLastName,
-      dni,
-      email,
-      password,
-      rol: "oper",
-      //branchId
-    });
-    res.status(201).send(newUser);
-  } catch (error) {
-    res.status(500).send(`Error al registrarse: ${error.message}`);
-  }
-});
-
-router.post("/login", postLogin);
-router.post("/logout", postLogout);
-router.post("/password-reset", postPasswordReset);
-router.post("/complete-password-reset", postCompletePasswordReset);
+//Super
+router.post('/create', auth, checkSuperRole, userController.createUser);
+router.post('/:dni/reset-password', auth, checkSuperRole, userController.adminResetPassword);
+router.post('/:dni/assign-role', auth, checkSuperRole, userController.assignRoleToUser);
+router.put('/:dni', auth, checkSuperRole, userController.updateUserByDni);
+router.get('/all', auth, checkSuperRole, userController.getAllUsers);
+router.get('/:dni', auth, checkSuperRole, userController.getUserByDni);
+router.delete('/:dni', auth, checkSuperRole, userController.deleteUserByDni);
+//Admin
+router.put('/:dni/depromote', auth, checkAdminRole, userController.depromoteOpertoUserByDni);
+//All users
+router.get('/me', auth, userController.me);
+router.put('/me/change-password', auth, userController.changeUserPassword);
+router.put('/me', auth, userController.updateUser);
+//Any client not logged in
+router.post('/register', userController.register)
+router.post('/login', userController.login);
+router.post('/forgot-password', userController.mailForgotPassword);
+router.post('/reset-password', userController.mailResetPassword);
 
 export default router;

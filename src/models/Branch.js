@@ -1,6 +1,5 @@
 import Sequelize from "sequelize";
 import sequelize from "../config/database.js";
-// import Reserva from "./Reserva.js";
 
 class Branch extends Sequelize.Model {}
 
@@ -19,7 +18,7 @@ Branch.init(
       type: Sequelize.STRING,
       allowNull: false,
     },
-    contact: {
+    phoneNumber: {
       type: Sequelize.INTEGER,
       allowNull: false,
     },
@@ -28,23 +27,19 @@ Branch.init(
       allowNull: false,
     },
     capacity: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+    },
+    openingTime: {
       type: Sequelize.STRING,
       allowNull: false,
     },
-    openingtime: {
-      type: Sequelize.STRING,
-      allowNull: false,
-    },
-    closingtime: {
+    closingTime: {
       type: Sequelize.STRING,
       allowNull: false,
     },
   },
-
   { sequelize: sequelize, modelName: "branches", timestamps: false }
 );
 
 export default Branch;
-
-// User.hasMany(Reserva);
-// Reserva.belongsTo(User)
