@@ -1,9 +1,7 @@
-import Sequelize  from "sequelize";
-
+import Sequelize from "sequelize";
 import sequelize from "../config/database.js";
-import Branch from "./Branch.js"
 
-class Reservation extends Sequelize.Model{}
+class Reservation extends Sequelize.Model {}
 
 Reservation.init({
   id: {
@@ -14,24 +12,17 @@ Reservation.init({
   date: {
     type: Sequelize.DATE,
     defaultValue: Sequelize.NOW,
-    allowNull: false
+    allowNull: false,
   },
-
   time: {
-type: Sequelize.INTEGER,
-allowNull: false
+    type: Sequelize.INTEGER,
+    allowNull: false,
   },
-  state : {
-    type: Sequelize.ENUM("pendiente", "confirmado", "cancelado", "asistio", "ausente"),
-    defaultValue: "pendiente"
+  state: {
+    type: Sequelize.ENUM("pendiente", "confirmado", "cancelado", "finalizado", "ausente"),
+    defaultValue: "pendiente",
   }
-},
-{ sequelize: sequelize, modelName: "reservations" }
-);
-
-
-
-Branch.hasMany(Reservation);
-Reservation.belongsTo(Branch)
+}, 
+{ sequelize: sequelize, modelName: "reservations" });
 
 export default Reservation;
