@@ -1,7 +1,5 @@
 import Sequelize from "sequelize";
 import sequelize from "../config/database.js";
-import Reserva from "./Reservation.js";
-import Branch from "./Branch.js";
 
 class Business extends Sequelize.Model {}
 
@@ -19,7 +17,7 @@ Business.init(
     email: {
       type: Sequelize.STRING,
     },
-    contact: {
+    phoneNumber: {
       type: Sequelize.INTEGER,
     },
     address: {
@@ -27,13 +25,7 @@ Business.init(
       allowNull: false,
     }
   },
-
-  { sequelize: sequelize, modelName: "business" }
+  { sequelize: sequelize, modelName: "businesses" }
 );
-
-
-
-Business.hasMany(Branch);
-Branch.belongsTo(Business)
 
 export default Business;
