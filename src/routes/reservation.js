@@ -1,58 +1,22 @@
-import express from "express";
-import Reservation from "../models/Reservation.js";
+import express from 'express';
+import reservationController from '../controllers/reservationController.js';
+import auth from '../middlewares/auth.js';
+import { checkOperatorRole, checkAdminRole, checkSuperRole } from '../middlewares/rolesMiddleware.js';
+
 const router = express.Router();
 
-router.get("/allReservations", async (req, res) => {
-  try {
-    const allReservations = await Reservation.findAll();
-    res.status(200).json(allReservations);
-  } catch (error) {
-    res.status(500).send("Error al obtener las reservas");
-  }
-});
-
-router.get("/:id", async (req, res) => {
-  try {
-    const reservation = await Reservation.findByPk(req.params.id);
-
-    if (reservation) {
-      res.status(200).send(reservation);
-    } else {
-      res.status(404).send("Reserva no encontrada");
-    }
-  } catch (error) {
-    res.status(500).send("Error al obtener la reserva");
-  }
-});
-
-router.get("/get/:dni", async (req, res) => {
-  try {
-    const userDni = req.params.dni;
-    const userReservations = await Reservation.findAll({
-      where: { userDni },
-    });
-    if (userReservations.length > 0) {
-      res.status(200).send(userReservations);
-    } else {
-      res.status(404).send("No se encontraron reservas para el usuario");
-    }
-  } catch (error) {
-    res.status(500).send("Error al obtener las reservas del usuario");
-  }
-});
-
-router.put("/update/:id", async (req, res) => {
-  try {
-    const updatedReservation = await Reservation.findByPk(req.params.id);
-    if (updatedReservation) {
-      await updatedReservation.update(req.body);
-      res.status(200).send(updatedReservation);
-    } else {
-      res.status(404).send("Reserva no encontrada");
-    }
-  } catch (error) {
-    res.status(500).send("Error al modificar la reserva");
-  }
-});
+//Super
+router.get('/all', auth, checkSuperRole, reservationController.getAllReservations);
+router.get('/:id', auth, checkSuperRole, reservationController.getReservationById);
+router.put('/modify/:id', auth, checkSuperRole, reservationController.modifyReservation);
+router.delete('/:id', auth, checkSuperRole, reservationController.deleteReservation);
+//Admin
+router.get('/metrics', auth, checkAdminRole, reservationController.getReservationMetrics);
+//Operator
+router.get('/branch', auth, checkOperatorRole, reservationController.getBranchReservations);
+router.put('/update/:id', auth, checkOperatorRole, reservationController.updateReservationStatus);
+//All users
+router.post('/create', auth, reservationController.createReservation); 
+router.get('/my', auth, reservationController.getUserReservations);
 
 export default router;
