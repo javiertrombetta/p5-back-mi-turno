@@ -202,4 +202,4 @@ Si deseas contribuir a este proyecto, por favor sigue estos pasos:
 
 
 ###  ¡Esperamos que disfrutes MI TURNO WEB APP!
-Equipo de desarrollo.
+*Grupo 6 de Mi Turno Web App*
