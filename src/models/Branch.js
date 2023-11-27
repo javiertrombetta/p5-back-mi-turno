@@ -38,6 +38,11 @@ Branch.init(
       type: Sequelize.STRING,
       allowNull: false,
     },
+    turnDuration: {
+      type: Sequelize.INTEGER, 
+      allowNull: false,
+      defaultValue: 30
+    },
   },
   { sequelize: sequelize, modelName: "branches", timestamps: false }
 );

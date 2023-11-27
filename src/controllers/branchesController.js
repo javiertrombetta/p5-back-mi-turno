@@ -1,8 +1,10 @@
 import Branch from "../models/Branch.js";
 import Business from "../models/Business.js";
 import User from "../models/User.js";
+import Reservation from "../models/Reservation.js";
 
 import { validateName, validateEmail, validatePhone, validateAddress, validateCapacity, validateTime } from '../utils/validations.js';
+import * as reservationStepper from '../utils/reservationStepper.js';
 
 const branchesController = {
   createBranch: async (req, res) => {
@@ -240,7 +242,84 @@ const branchesController = {
       console.error(error);
       res.status(500).json({ message: "Error al obtener la información de la sucursal" });
     }
-  },  
+  },
+  getBranchSchedules: async (req, res) => {
+    const branchId = req.params.id;
+    const queryDate = req.query.date;
+    try {
+      const branch = await Branch.findByPk(branchId, {
+        attributes: ['openingTime', 'closingTime', 'turnDuration']
+      });
+      if (!branch) {
+        return res.status(404).json({ message: 'Sucursal no encontrada' });
+      }
+      if (req.user.role !== 'admin' && (req.user.role !== 'oper' || req.user.branchId !== branch.id)) {
+        return res.status(403).json({ message: 'Acceso no autorizado' });
+      }
+      const allSchedules = reservationStepper.generateSchedules(branch.openingTime, branch.closingTime, branch.turnDuration);
+      const reservations = await Reservation.findAll({ 
+        where: { 
+          branchId,
+          date: queryDate
+        } 
+      });
+      const availableSchedules = reservationStepper.filterAvailableSchedules(allSchedules, reservations, queryDate);
+
+      res.json({ availableSchedules });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+  getAvailableBranchSchedules: async (req, res) => {
+    const branchId = req.params.id;
+    const queryDate = req.query.date;
+    try {
+      const branch = await Branch.findByPk(branchId, {
+        attributes: ['openingTime', 'closingTime', 'turnDuration']
+      });
+      if (!branch) {
+        return res.status(404).json({ message: 'Sucursal no encontrada' });
+      }
+
+      const allSchedules = reservationStepper.generateSchedules(branch.openingTime, branch.closingTime, branch.turnDuration);
+      const reservations = await Reservation.findAll({ 
+        where: { 
+          branchId,
+          date: queryDate
+        } 
+      });
+      const availableSchedules = reservationStepper.filterAvailableSchedules(allSchedules, reservations, queryDate);
+      res.json({ availableSchedules });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+  getCriticalBranchSchedules: async (req, res) => {
+    const branchId = req.params.id;
+    const queryDate = req.query.date;
+    try {
+      const branch = await Branch.findByPk(branchId, {
+        attributes: ['openingTime', 'closingTime', 'turnDuration']
+      });
+      if (!branch) {
+        return res.status(404).json({ message: 'Sucursal no encontrada' });
+      }
+      const allSchedules = reservationStepper.generateSchedules(branch.openingTime, branch.closingTime, branch.turnDuration);
+      const reservations = await Reservation.findAll({ 
+        where: { 
+          branchId,
+          date: queryDate
+        } 
+      });
+      const criticalSchedules = reservationStepper.identifyCriticalSchedules(allSchedules, reservations, queryDate);
+      res.json({ criticalSchedules });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  },
 };
 
 export default branchesController;
