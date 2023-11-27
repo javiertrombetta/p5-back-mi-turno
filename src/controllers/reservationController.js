@@ -5,17 +5,21 @@ import Branch from "../models/Branch.js";
 import Business from "../models/Business.js";
 
 import { transporter } from "../config/mailTransporter.js";
+import validate from '../utils/validations.js';
+import * as formatData from '../utils/formatData.js';
+import * as emailService from '../utils/emailTemplates.js';
+import * as Metrics from '../utils/metrics.js';
 
 const reservationController = {
   createReservation: async (req, res) => {
-
     const { branchId, date, time } = req.body;
     const userId = req.user.dni;
 
-    try {    
-      if (!date || !time || !branchId) {
-        return res.status(400).json({ message: "Datos de la reserva incompletos" });
-      }
+    if (!validate.date(date) || !validate.time(time) || !validate.id(branchId)) {
+      return res.status(400).json({ message: "Datos de la reserva inválidos o incompletos" });
+    }
+
+    try {
       const newReservation = await Reservation.create({
         userId,
         branchId,
@@ -23,24 +27,16 @@ const reservationController = {
         time,
         state: 'pendiente'
       });
-      const mailOptions = {
-        from: process.env.MAIL_USERNAME,
-        to: req.user.email,
-        subject: 'Confirmación de Reserva',
-        html: `<h3>Hola ${req.user.fullName},</h3>
-              <p>Tu reserva ha sido creada con éxito:</p>
-              <ul>
-              <li>Fecha: ${date}</li>
-              <li>Hora: ${time}</li>
-              <li>Sucursal: ${branchId}</li>
-              </ul>`
-      };
+
+      const mailOptions = emailService.createReservationEmailOptions(req.user, {
+        date: newReservation.date,
+        time: newReservation.time,
+        branchId: newReservation.branchId
+      });
 
       await transporter.sendMail(mailOptions);
-
       res.status(201).json(newReservation);
-    } 
-    catch (error) {
+    } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Error al crear la reserva" });
     }
@@ -48,6 +44,11 @@ const reservationController = {
   getUserReservations: async (req, res) => {
     try {        
       const userDni = req.user.dni;
+
+      if (!validate.dni(userDni)) {
+        return res.status(400).json({ message: "DNI inválido" });
+      }
+
       const userReservations = await Reservation.findAll({
         where: { userId: req.user.dni },
         include: {
@@ -103,6 +104,10 @@ const reservationController = {
     const { id } = req.params;
     const { state } = req.body;
 
+    if (!validate.id(id) || !validate.state(state)) {
+      return res.status(400).json({ message: "Datos de actualización de reserva inválidos" });
+    }
+
     try {
       const reservation = await Reservation.findByPk(id, {
         include: {
@@ -129,88 +134,29 @@ const reservationController = {
     }
   },
   getReservationMetrics: async (req, res) => {
+    const adminBusinessId = req.user.BusinessId;
+    if (!validate.id(adminBusinessId)) {
+      return res.status(400).json({ message: 'Información de empresa no disponible o inválida' });
+    }
+
     try {
-      const adminBusinessId = req.user.BusinessId;
-      if (!adminBusinessId) 
-      {
-        return res.status(400).json({ message: 'Información de empresa no disponible' });
-      }
       const branches = await Branch.findAll({
         where: { businessId: adminBusinessId },
         attributes: ['id', 'name']
       });
       const branchIds = branches.map(branch => branch.id);
       const metrics = {
-        peakTimes: {},
-        averageCancellations: {},
-        mostVisitedBranches: {},
-        operatorCount: {}
+        peakTimes: await Metrics.getPeakTimes(branchIds),
+        averageCancellations: await Metrics.getAverageCancellations(branchIds, branches.length),
+        mostVisitedBranches: await Metrics.getMostVisitedBranches(branchIds),
+        operatorCount: await Metrics.getOperatorCount(branchIds)
       };
-
-      const peakTimes = await Reservation.findAll({
-        attributes: [
-          [Sequelize.fn('date_part', 'hour', Sequelize.col('date')), 'hour'],
-          [Sequelize.fn('count', Sequelize.col('id')), 'count']
-        ],
-        where: {
-          branchId: branchIds,
-          state: ['confirmado', 'finalizado']
-        },
-        group: ['hour'],
-        order: [[Sequelize.fn('count', Sequelize.col('id')), 'DESC']],
-        limit: 1
-      });
-      metrics.peakTimes = peakTimes;
-
-      const cancellationCounts = await Reservation.findAll({
-        attributes: [
-          'branchId',
-          [Sequelize.fn('count', Sequelize.col('id')), 'cancelCount']
-        ],
-        where: {
-          branchId: branchIds,
-          state: 'cancelado'
-        },
-        group: ['branchId']
-      });
-      cancellationCounts.forEach(cancelCount => {
-        metrics.averageCancellations[cancelCount.branchId] = cancelCount.cancelCount / branches.length;
-      }); 
-
-      const visitedCounts = await Reservation.findAll({
-        attributes: [
-          'branchId',
-          [Sequelize.fn('count', Sequelize.col('id')), 'visitCount']
-        ],
-        where: {
-          branchId: branchIds,
-          state: 'finalizado'
-        },
-        group: ['branchId'],
-        order: [[Sequelize.fn('count', Sequelize.col('id')), 'DESC']],
-        limit: 1
-      });
-      metrics.mostVisitedBranches = visitedCounts;
-   
-      const operatorsCount = await User.count({
-        where: {
-          role: 'oper',
-          BranchId: branchIds
-        },
-        group: ['BranchId']
-      });
-      operatorsCount.forEach(count => {
-        metrics.operatorCount[count.BranchId] = count.count;
-      });
-
       res.json({ metrics });
-
-    } 
-    catch (error) {
+    } catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });
     }
-  },  
+  },
   getAllReservations: async (req, res) => {
     try {
       const allReservations = await Reservation.findAll({
@@ -230,18 +176,10 @@ const reservationController = {
         ],
         attributes: ['id', 'date', 'time', 'state']
       });
-      const formattedReservations = allReservations.map(reservation => {
-        const timeString = reservation.time.toString().padStart(4, '0');
-        const formattedTime = `${timeString.substring(0, 2)}:${timeString.substring(2)}`;
-        return {
-          ...reservation.get({ plain: true }),
-          date: reservation.date.toISOString().substring(0, 10),
-          time: formattedTime
-        };
-      });
+
+      const formattedReservations = formatData.formatReservationData(allReservations);
       res.status(200).json(formattedReservations);
-    } 
-    catch (error) {
+    } catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });
     }
@@ -269,16 +207,9 @@ const reservationController = {
       if (!reservation) {
         return res.status(404).json({ error: "Reserva no encontrada" });
       }
-      const timeString = reservation.time.toString().padStart(4, '0');
-      const formattedTime = `${timeString.substring(0, 2)}:${timeString.substring(2)}`;
-      const formattedReservation = {
-        ...reservation.get({ plain: true }),
-        date: reservation.date.toISOString().substring(0, 10),
-        time: formattedTime
-      };
+      const formattedReservation = formatData.formatSingleReservation(reservation);
       res.json(formattedReservation);
-    } 
-    catch (error) {
+    } catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });
     }
@@ -286,13 +217,24 @@ const reservationController = {
   modifyReservation: async (req, res) => {
     const reservationId = req.params.id;
     const { userId, branchId, date, time, state } = req.body;
-
+    if (!validate.id(reservationId)) {
+      return res.status(400).json({ message: "ID de reserva inválido" });
+    }
+    if (date && !validate.date(date)) {
+      return res.status(400).json({ message: "Fecha inválida" });
+    }
+    if (time && !validate.time(time)) {
+      return res.status(400).json({ message: "Hora inválida" });
+    }
+    if (state && !validate.state(state)) {
+      return res.status(400).json({ message: "Estado inválido" });
+    }  
     try {
       const reservation = await Reservation.findByPk(reservationId);
       if (!reservation) {
         return res.status(404).json({ message: 'Reserva no encontrada' });
       }
-      const formattedTime = time.toString().padStart(4, '0').replace(/(\d{2})(\d{2})/, '$1:$2');
+      const formattedTime = formatData.formatTime(time);
       await reservation.update({
         userId: userId || reservation.userId,
         branchId: branchId || reservation.branchId,
@@ -300,24 +242,25 @@ const reservationController = {
         time: formattedTime,
         state: state || reservation.state
       });
-      res.json({ message: 'Reserva modificada con éxito', reservation });
-    } 
-    catch (error) {
+      const updatedReservation = formatData.formatSingleReservation(reservation);
+      res.json({ message: 'Reserva modificada con éxito', updatedReservation });
+    } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Error al modificar la reserva' });
     }
-  },
+  },  
   deleteReservation: async (req, res) => {
-    const reservationId = req.params.id;
+    const reservationId = req.params.id;  
+    if (!validate.id(reservationId)) {
+      return res.status(400).json({ message: "ID de reserva inválido" });
+    }  
     try {
       const reservation = await Reservation.findByPk(reservationId);
       if (!reservation) {
-        return res.status(404).json({ message: 'Reserva no encontrada' });
-      }
+        return res.status(404).json({ message: 'Reserva no encontrada' });      }
       await reservation.destroy();
       res.json({ message: 'Reserva eliminada con éxito' });
-    }
-    catch (error) {
+    } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Error al eliminar la reserva' });
     }
