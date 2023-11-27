@@ -1,13 +1,19 @@
 import Sequelize from "sequelize";
 import { config } from "dotenv";
 
-config();
+if (process.env.NODE_ENV === "production") {
+  config({ path: '.env.production' });
+} else {
+  config({ path: '.env' });
+}
 
-const sequelize = new Sequelize(process.env.DB_NAME, null, null, {
-  database: process.env.DB_NAME,
-  username: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  host: process.env.DB_HOST,
+const dbName = process.env.NODE_ENV === 'production' ? process.env.PROD_DB_NAME : process.env.DEV_DB_NAME;
+const dbUser = process.env.NODE_ENV === 'production' ? process.env.PROD_DB_USER : process.env.DEV_DB_USER;
+const dbPassword = process.env.NODE_ENV === 'production' ? process.env.PROD_DB_PASSWORD : process.env.DEV_DB_PASSWORD;
+const dbHost = process.env.NODE_ENV === 'production' ? process.env.PROD_DB_HOST : process.env.DEV_DB_HOST;
+
+const sequelize = new Sequelize(dbName, dbUser, dbPassword, {
+  host: dbHost,
   dialect: "postgres",
   logging: false,
 });

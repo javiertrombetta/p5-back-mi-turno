@@ -5,11 +5,29 @@ import {
   checkSuperRole,
   checkAdminRole,
 } from "../middlewares/rolesMiddleware.js";
+import { checkDevEnv } from "../middlewares/envMiddleware.js";
 
 const router = express.Router();
 
+//Any client not logged in
+router.post("/register", userController.register);
+router.post("/login", userController.login);
+router.post("/logout", auth, userController.logout);
+router.post("/forgot-password", userController.mailForgotPassword);
+router.post("/reset-password", userController.mailResetPassword);
+//All users
+router.put("/me/change-password", auth, userController.changeUserPassword);
+router.put("/me", auth, userController.updateUser);
+router.get("/me", auth, userController.me);
+router.delete("/me", auth, userController.deleteMe);
+//Admin
+router.put(
+  "/:dni/depromote",
+  auth,
+  checkAdminRole,
+  userController.depromoteOpertoUserByDni
+);
 //Super
-router.post("/create", auth, checkSuperRole, userController.createUser);
 router.post(
   "/:dni/reset-password",
   auth,
@@ -22,25 +40,16 @@ router.post(
   checkSuperRole,
   userController.assignRoleToUser
 );
+router.post("/", auth, checkSuperRole, checkDevEnv, userController.createUser);
 router.put("/:dni", auth, checkSuperRole, userController.updateUserByDni);
-router.get("/all", auth, checkSuperRole, userController.getAllUsers);
-router.get("/me", auth, userController.me);
 router.get("/:dni", auth, checkSuperRole, userController.getUserByDni);
-router.delete("/:dni", auth, checkSuperRole, userController.deleteUserByDni);
-//Admin
-router.put(
-  "/:dni/depromote",
+router.get("/", auth, checkSuperRole, userController.getAllUsers);
+router.delete(
+  "/:id",
   auth,
-  checkAdminRole,
-  userController.depromoteOpertoUserByDni
+  checkSuperRole,
+  checkDevEnv,
+  userController.deleteUserByDni
 );
-//All users
-router.put("/me/change-password", auth, userController.changeUserPassword);
-router.put("/me", auth, userController.updateUser);
-//Any client not logged in
-router.post("/register", userController.register);
-router.post("/login", userController.login);
-router.post("/forgot-password", userController.mailForgotPassword);
-router.post("/reset-password", userController.mailResetPassword);
 
 export default router;

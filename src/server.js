@@ -4,11 +4,22 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import sequelize from "./config/database.js";
 import router from "./routes/index.js";
+import { config } from "dotenv";
 
+if (process.env.NODE_ENV === "production") {
+  config({ path: ".env.production" });
+} else {
+  config();
+}
+
+const forceSync = process.env.NODE_ENV !== "production";
 const server = express();
+const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:3001";
+const serverPort = process.env.SERVER_PORT || 3000;
+
 server.use(
   cors({
-    origin: "http://localhost:3001",
+    origin: corsOrigin,
     credentials: true,
   })
 );
@@ -17,16 +28,22 @@ server.use(express.json());
 server.use(morgan("tiny"));
 server.use(express.urlencoded({ extended: true }));
 server.use("/", router);
-server.use((err, req, res, next) => {
+server.use((req, res, next, err) => {
   console.error(err);
-  res.status(500).send(err.message);
+  if (process.env.NODE_ENV === "production") {
+    res.status(500).send("Internal Server Error");
+  } else {
+    res.status(500).send(err.message);
+  }
 });
 sequelize
-  .sync({ force: false })
+  .sync({ force: forceSync })
   .then(() => {
-    console.log("Base de datos sincronizada");
-    server.listen(3000, () => {
-      console.log("Servidor escuchando en el puerto 3000");
+    console.log(
+      `Base de datos sincronizada (force: ${forceSync ? "TRUE" : "FALSE"})`
+    );
+    server.listen(serverPort, () => {
+      console.log(`Servidor escuchando en el puerto ${serverPort}`);
     });
   })
   .catch((err) => {

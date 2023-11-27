@@ -1,14 +1,14 @@
 # MI-TURNO-WEB API
 
-Este repositorio contiene el código fuente del backend para MI TURNO WEB APP.
+Este repositorio contiene el código fuente del backend para **MI TURNO WEB APP**.
 
 ## Integrantes
 
-- Belen Banegas
 - Dario Andrada
+- Belen Banegas
+- Valentin Guardia
 - Franco Prandi
 - Javier Trombetta
-- Valentin Guardia
 
 ## Requisitos previos
 
@@ -17,46 +17,70 @@ Este repositorio contiene el código fuente del backend para MI TURNO WEB APP.
 
 ## Instalación
 
-1. **Clona el repositorio:**
-
+1. **Cloná el repositorio.**
    Dependiendo de tu preferencia, clona el repositorio utilizando HTTP, SSH o GitHub CLI:
 
    ```bash
       git clone https://github.com/javiertrombetta/p5-back-mi-turno.git
    ```
-2. **Instala las dependencias:**
+<BR>
+
+2. **Instalá las dependencias:**
 
    ```bash
       cd p5-back-mi-turno
-      npm install o npm i (para instalar las dependencias)
+      npm install
    ```
 
 ## Configuración
 
-Creá un archivo .env en el directorio raíz del proyecto y configura las siguientes variables de entorno:
+Creá un archivo `.env` en el directorio raíz del proyecto y configura las siguientes variables de entorno:
 
-```env
+   ```env
+   # Configuración de la base de datos
    DB_HOST=[URL_DE_BASE_DE_DATOS]
    DB_NAME=[NOMBRE_DE_BASE_DE_DATOS]
    DB_USER=[USUARIO]
-   DB_PASS=[CONTRASEÑA]
+   DB_PASSWORD=[CONTRASEÑA]
 
-   MAIL_SERVICE=[SERVICIO]
+   # Configuración del servidor
+   SERVER_PORT=[PUERTO_DE_SERVIDOR]
+   CORS_ORIGIN=[URL_APP_FRONT]
+
+   # Configuración del servicio de correo electrónico
+   MAIL_SERVICE=[NOMBRE_DEL_SERVICIO]
    MAIL_RESET_PASSWORD_URL=[URL_DE_SITIO_WEB]
    MAIL_USERNAME=[CUENTA_DE_EMAIL]
    MAIL_PASSWORD=[CONTRASEÑA_DE_CUENTA_DE_EMAIL]
 
-   JWT_SECRET=[SECRETO_PARA_ENCRIPTAR]
+   # Configuración de JSON Web Token
+   JWT_SECRET=[SECRETO_PARA_ENCRIPTAR]   
    ```
 
 ## Uso
 
-Para iniciar la aplicación, ejecuta:
+1. **Iniciar la aplicación:**
+   Para iniciar la aplicación, ejecuta:
 
-```bash
-   npm start
-```
-La aplicación se iniciará en http://localhost:3000.
+   ```bash
+      npm start
+   ```
+   *La aplicación se iniciará en http://localhost:3000.*
+   
+   <BR>
+
+2. **Modificar el Parámetro de Sincronización:**
+   Dentro de este archivo existe una variable llamada `forceSync`. Esta variable controla cómo se sincroniza la base de datos cuando iniciás la aplicación. 
+
+   - Si `forceSync` está configurado como `true`, la base de datos se sincronizará forzando una actualización de la estructura (lo que puede resultar en la pérdida de datos existentes). 
+   - Si está configurado como `false`, la base de datos se sincronizará sin modificar la estructura existente.
+
+   *Inicialmente `forceSync` se encuentra en `true`. Tenés que cambiar este comportamiento para que no se vuelvan a crear las tablas y las relaciones de la base de datos.*
+   
+   Para cambiar el comportamiento de sincronización, editá la línea:
+   ```javascript
+   const forceSync = true; // Cambiar a false para no forzar la sincronización
+
 
 ## Estructura del proyecto
 ```bash
@@ -178,4 +202,4 @@ Si deseas contribuir a este proyecto, por favor sigue estos pasos:
 
 
 ###  ¡Esperamos que disfrutes MI TURNO WEB APP!
-Equipo de desarrollo.
+*Grupo 6 de Mi Turno Web App*
