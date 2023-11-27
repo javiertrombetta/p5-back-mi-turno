@@ -6,15 +6,15 @@ import { checkAdminRole, checkSuperRole, checkOperatorRole } from '../middleware
 const router = express.Router();
 
 // Super
-router.post('/create', auth, checkSuperRole, branchesController.createBranch);
-router.put('/update/:id', auth, checkSuperRole, branchesController.updateBranch);
-router.delete('/delete/:id', auth, checkSuperRole, branchesController.deleteBranch);
+router.post('/', auth, checkSuperRole, branchesController.createBranch);
+router.put('/:id', auth, checkSuperRole, branchesController.updateBranch);
+router.delete('/:id', auth, checkSuperRole, branchesController.deleteBranch);
 // Admin
-router.get('/by-business/:businessId', auth, checkAdminRole, branchesController.getBranchesByBusiness);
+router.get('/business/:businessId', auth, checkAdminRole, branchesController.getBranchesByBusiness);
 // Operator
 router.get('/assigned', auth, checkOperatorRole, branchesController.getAssignedBranches);
 // All users
-router.get('/all', auth, branchesController.getAllBranches);
 router.get('/:id', auth, branchesController.getBranchById);
+router.get('/', auth, branchesController.getAllBranches);
 
 export default router;

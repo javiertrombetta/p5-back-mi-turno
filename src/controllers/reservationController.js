@@ -5,6 +5,7 @@ import Branch from "../models/Branch.js";
 import Business from "../models/Business.js";
 
 import { transporter } from "../config/mailTransporter.js";
+import * as emailService from '../utils/emailTemplates.js';
 
 const reservationController = {
   createReservation: async (req, res) => {
@@ -23,26 +24,12 @@ const reservationController = {
         time,
         state: 'pendiente'
       });
-      const mailOptions = {
-        from: process.env.MAIL_USERNAME,
-        to: req.user.email,
-        subject: 'Confirmación de Reserva',
-        html: `<h3>Hola ${req.user.fullName},</h3>
-              <p>Tu reserva se creó con éxito:</p>
-              <ul>
-              <li>Fecha: ${date}</li>
-              <li>Hora: ${time}</li>
-              <li>Sucursal: ${branchId}</li>
-              </ul>
-              <p>Su estado actual es: <b>PENDIENTE</b></p>
-              <p>¡Gracias por utilizar nuestro servicio!</p>
-              <p>Saludos cordiales,</p>
-              <p><b>Grupo 6 de Mi Turno Web App</b></p>`
-
-      };
-
+      const mailOptions = emailService.createReservationEmailOptions(req.user, {
+        date: newReservation.date,
+        time: newReservation.time,
+        branchId: newReservation.branchId
+      });      
       await transporter.sendMail(mailOptions);
-
       res.status(201).json(newReservation);
     } 
     catch (error) {
