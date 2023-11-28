@@ -1,11 +1,11 @@
-import sequelize from "../config/database";
-import Branch from "../models/Branch";
+import sequelize from "../../src/config/database.js";
+import Branch from "../../src/models/Branch.js";
 
 const seedDatabase = async () => {
   try {
     // Sincroniza el modelo con la base de datos
     console.log("Sediando informacion");
-    await sequelize.sync({ force: true });
+    await sequelize.sync({ force: false });
 
     // Crea las sucursales
     const branchesData = [
@@ -17,6 +17,7 @@ const seedDatabase = async () => {
         capacity: 50,
         openingTime: "09:00 AM",
         closingTime: "06:00 PM",
+        turnDuration: 30,
       },
       {
         name: "Sucursal 2",
@@ -26,11 +27,13 @@ const seedDatabase = async () => {
         capacity: 30,
         openingTime: "10:00 AM",
         closingTime: "07:00 PM",
+        turnDuration: 30,
       },
       // Agrega más sucursales según sea necesario
     ];
 
     const branches = await Branch.bulkCreate(branchesData);
+    //console.log(branches);
 
     console.log("Seeding completado");
     process.exit(); // Esto cierra el proceso después de realizar el seeding
