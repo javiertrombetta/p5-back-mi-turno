@@ -1,3 +1,4 @@
+const validRoles = ["super", "admin", "oper", "user"];
 const regexPatterns = {
   id: /^\d+$/,
   dni: /^\d{8}$/,
@@ -9,7 +10,6 @@ const regexPatterns = {
   imageFormat: /\.(jpeg|jpg|png|gif)$/i,
   password: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/
 };
-
 const validate = {
   id: id => regexPatterns.id.test(id),
   dni: dni => regexPatterns.dni.test(dni),
@@ -25,6 +25,7 @@ const validate = {
   imageFormat: photo => regexPatterns.imageFormat.test(photo),
   password: password => regexPatterns.password.test(password),
   createResetUrl: resetToken => `${process.env.MAIL_RESET_PASSWORD_URL}/reset-password/${resetToken}`,
+  turnDuration: duration => Number.isInteger(duration) && duration >= 15 && duration <= 120,
+  role: role => validRoles.includes(role)
 };
-
 export default validate;
