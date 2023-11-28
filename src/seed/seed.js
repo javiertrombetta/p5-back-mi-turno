@@ -1,9 +1,10 @@
-import Branch from "./models/Branch";
-import sequelize from "./config/database";
+import sequelize from "../config/database";
+import Branch from "../models/Branch";
 
 const seedDatabase = async () => {
   try {
     // Sincroniza el modelo con la base de datos
+    console.log("Sediando informacion");
     await sequelize.sync({ force: true });
 
     // Crea las sucursales
