@@ -12,17 +12,12 @@ if (process.env.NODE_ENV === "production") {
   config();
 }
 
-const forceSync = process.env.NODE_ENV !== "production";
+const forceSync = true;
 const server = express();
 const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:3001";
 const serverPort = process.env.SERVER_PORT || 3000;
 
-server.use(
-  cors({
-    origin: corsOrigin,
-    credentials: true,
-  })
-);
+server.use( cors({ origin: corsOrigin, credentials: true }) );
 server.use(cookieParser());
 server.use(express.json());
 server.use(morgan("tiny"));
