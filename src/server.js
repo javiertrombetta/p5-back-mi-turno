@@ -12,7 +12,9 @@ if (process.env.NODE_ENV === "production") {
   config();
 }
 
-const forceSync = true;
+const forceSyncArg = process.argv[2];
+const forceSync = forceSyncArg === 'true';
+
 const server = express();
 const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:3001";
 const serverPort = process.env.SERVER_PORT || 3000;
