@@ -18,23 +18,34 @@ const userController = {
     if (!dni) {
       return res.status(400).json({ message: "DNI no proporcionado." });
     }
+    if (!validate.dni(dni)) {
+      return res.status(400).json({ 
+        message: "El DNI no cumple con las condiciones mínimas:\n" +
+                 "✓ Solo se aceptan números.\n" +
+                 "✓ 8 dígitos de largo."                  
+      });
+    }
     if (!email) {
       return res.status(400).json({ message: "Email no proporcionado." });
+    }
+    if (!validate.email(email)) {
+      return res.status(400).json({ message: "El email tiene un formato incorrecto." });
     }
     if (!password) {
       return res.status(400).json({ message: "Contraseña no proporcionada." });
     }
     if (!validate.name(fullName)) {
       return res.status(400).json({ message: "El nombre completo contiene caracteres inválidos." });
-    }
-    if (!validate.dni(dni)) {
-      return res.status(400).json({ message: "El DNI contiene caracteres inválidos. Solo se aceptan números." });
-    }
-    if (!validate.email(email)) {
-      return res.status(400).json({ message: "El email tiene un formato incorrecto." });
-    }
+    }   
     if (!validate.password(password)) {
-      return res.status(400).json({ message: "La contraseña no cumple con los requisitos: Solo letras y números. Mínimo: 1 letra mayúsucula, 1 letra minúscula, 1 número, 8 caracteres de largo." });
+      return res.status(400).json({ 
+        message: "La nueva contraseña no cumple con los requisitos mínimos:\n" +
+                 "✓ Solo letras y números.\n" +
+                 "✓ 1 letra mayúscula.\n" +
+                 "✓ 1 letra minúscula.\n" +
+                 "✓ 1 número.\n" +
+                 "✓ 8 caracteres de largo." 
+      });
     }
     try {
       const userExist = await User.findOne({ where: { dni } });
@@ -159,7 +170,14 @@ const userController = {
       return res.status(400).json({ message: "Se requiere la contraseña nueva."});
     }
     if (!validate.password(newPassword)) {
-      return res.status(400).json({ message: "La nueva contraseña no cumple con los requisitos mínimos: Solo letras y números. Mínimo: 1 letra mayúsucula, 1 letra minúscula, 1 número, 8 caracteres de largo.." });
+      return res.status(400).json({ 
+        message: "La nueva contraseña no cumple con los requisitos mínimos:\n" +
+                 "✓ Solo letras y números.\n" +
+                 "✓ 1 letra mayúscula.\n" +
+                 "✓ 1 letra minúscula.\n" +
+                 "✓ 1 número.\n" +
+                 "✓ 8 caracteres de largo." 
+      });
     }
     try {
       const user = await User.findByPk(userDni);
@@ -216,7 +234,14 @@ const userController = {
       return res.status(400).json({ message: "Se requiere ingresar una nueva contraseña." });
     }
     if (!validate.password(newPassword)) {
-      return res.status(400).json({ message: "La nueva contraseña no cumple con los requisitos mínimos: Solo letras y números. Mínimo: 1 letra mayúsucula, 1 letra minúscula, 1 número, 8 caracteres de largo.." });
+      return res.status(400).json({ 
+        message: "La nueva contraseña no cumple con los requisitos mínimos:\n" +
+                 "✓ Solo letras y números.\n" +
+                 "✓ 1 letra mayúscula.\n" +
+                 "✓ 1 letra minúscula.\n" +
+                 "✓ 1 número.\n" +
+                 "✓ 8 caracteres de largo." 
+      });
     }
     try {
       const user = await User.findOne({
@@ -502,7 +527,9 @@ const userController = {
       const resetToken = generateToken({ userId: newUser.dni });
       const mailOptions = emailTemplates.createUser(newUser, resetToken);
       await transporter.sendMail(mailOptions);
-      res.status(201).json({ message: "Usuario creado exitosamente. Se envió un correo a tu cuenta para establecer la contraseña." });
+      res.status(201).json({ 
+        message: "Usuario creado exitosamente.\nSe envió un correo a tu cuenta para establecer la contraseña." 
+      });      
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });

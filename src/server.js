@@ -17,6 +17,7 @@ const forceSync = forceSyncArg === 'true';
 
 const server = express();
 const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:3001";
+const serverHost = process.env.SERVER_HOST || "http://localhost:3000";
 const serverPort = process.env.SERVER_PORT || 3000;
 
 server.use( cors({ origin: corsOrigin, credentials: true }) );
@@ -36,11 +37,9 @@ server.use((req, res, next, err) => {
 sequelize
   .sync({ force: forceSync })
   .then(() => {
-    console.log(
-      `Base de datos sincronizada (force: ${forceSync ? "TRUE" : "FALSE"})`
-    );
+    console.log(`Base de datos sincronizada (force: ${forceSync ? "TRUE" : "FALSE"})`);
     server.listen(serverPort, () => {
-      console.log(`Servidor escuchando en el puerto ${serverPort}`);
+      console.log(`Servidor escuchando en ${serverHost}:${serverPort}`);
     });
   })
   .catch((err) => {
