@@ -67,29 +67,57 @@ const emailTemplates = {
     <p>Saludos cordiales,</p>
     <p><b>Grupo 6 de Mi Turno Web App</b></p>
   `),
+  createReservationForClient: (user, { clientName, clientEmail, date, time, branchId }) => {
+    return createEmailOptions(clientEmail, 'Confirmación de Reserva para Cliente', `
+      <h3>Hola ${clientName},</h3>
+      <p>${user.fullName} creó una nueva reseva a tu nombre.</p>
+      <ul>
+        <li>Fecha: ${date}</li>
+        <li>Hora: ${time}</li>
+        <li>Sucursal: ${branchId}</li>
+      </ul>
+      <p>En caso de querer cancelar la misma, podés comunicarte utilizando su correo ${user.email}.</p>
+      <p>Saludos cordiales,</p>
+      <p><b>Grupo 6 de Mi Turno Web App</b></p>
+    `);
+  },
+  statusUpdateNotification: ({ email, fullName, reservationId, newState }) => createEmailOptions(email, 'Actualización del Estado de tu Reserva', `
+    <h3>Hola ${fullName},</h3>
+    <p>El estado de tu reserva con ID ${reservationId} fue actualizado a <b>${newState}</b>.</p>
+    <p>Si tenés consultas o necesitas más información, no dudes en contactarnos.</p>
+    <p>Saludos,</p>
+    <p><b>Grupo 6 de Mi Turno Web App</b></p>
+  `),
+  cancellationNotification: ({ email, fullName, reservationId }) => createEmailOptions(email, 'Cancelación de Reserva', `
+    <h3>Hola ${fullName},</h3>
+    <p>Tu reserva con ID ${reservationId} ha sido cancelada.</p>
+    <p>Si tenés consultas o necesitás asistencia, no dudes en contactarnos.</p>
+    <p>Saludos,</p>
+    <p><b>Grupo 6 de Mi Turno Web App</b></p>
+  `),
   accountDeletion: (user) => createEmailOptions(user.email, 'Cuenta Eliminada en Mi Turno Web App', `
     <h3>¡Hola, ${user.fullName}!</h3>
-    <p>Lamentamos informarte que tu cuenta en Mi Turno Web App ha sido eliminada.</p>
-    <p>Si crees que esto es un error, por favor contacta con nuestro soporte.</p>
-    <p>Gracias por haber sido parte de nuestra comunidad.</p>
+    <p>Tu cuenta en Mi Turno Web App ha sido eliminada.</p>
+    <p>Si creés que esto es un error, por favor comunicate con nuestro soporte.</p>
+    <p>¡Gracias por haber sido parte de nuestra comunidad!</p>
     <p>Saludos,</p>
     <p><b>Grupo 6 de Mi Turno Web App</b></p>
   `),
   passwordChanged: (user) => createEmailOptions(user.email, 'Cambio de Contraseña en Mi Turno Web App', `
     <h3>¡Hola, ${user.fullName}!</h3>
-    <p>Tu contraseña en Mi Turno Web App ha sido cambiada exitosamente.</p>
-    <p>Si no realizaste este cambio, por favor contacta inmediatamente con nuestro equipo de soporte.</p>
+    <p>Tu contraseña en Mi Turno Web App fue cambiada exitosamente.</p>
+    <p>Si no realizaste este cambio, por favor comunicate inmediatamente con nuestro equipo de soporte.</p>
     <p>Saludos,</p>
     <p><b>Grupo 6 de Mi Turno Web App</b></p>
   `),
   userDetailsUpdated: (user, updatedFields) => createEmailOptions(user.email, 'Actualización de Datos en Mi Turno Web App', `
     <h3>¡Hola, ${user.fullName}!</h3>
-    <p>Tus datos en Mi Turno Web App han sido actualizados.</p>
+    <p>Tus datos en Mi Turno Web App fueron actualizados.</p>
     <p>Cambios realizados:</p>
     <ul>
       ${updatedFields.map(field => `<li>${field}</li>`).join('')}
     </ul>
-    <p>Si no realizaste estos cambios, por favor contacta inmediatamente con nuestro equipo de soporte.</p>
+    <p>Si no realizaste estos cambios, por favor comunicate inmediatamente con nuestro equipo de soporte.</p>
     <p>Saludos,</p>
     <p><b>Grupo 6 de Mi Turno Web App</b></p>
   `)
