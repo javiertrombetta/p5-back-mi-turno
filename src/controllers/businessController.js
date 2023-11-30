@@ -12,14 +12,23 @@ const businessController = {
     if (!validate.name(name)) {
       return res.status(400).json({ message: "El nombre contiene caracteres inválidos." });
     }
-    if (email && !validate.email(email)) {
-      return res.status(400).json({ message: "Formato de correo electrónico inválido." });
+    if (!email) {
+      return res.status(400).json({ message: "El campo email es obligatorio." });
     }
-    if (phoneNumber && !validate.phone(phoneNumber)) {
-      return res.status(400).json({ message: "Formato de número de teléfono inválido." });
+    if (!validate.email(email)) {
+      return res.status(400).json({ message: "El email tiene un formato incorrecto." });
     }
-    if (address && !validate.address(address)) {
-      return res.status(400).json({ message: "Dirección postal inválida." });
+    if (!phoneNumber) {
+      return res.status(400).json({ message: "El número de teléfono es obligatorio." });
+    }
+    if (!validate.phone(phoneNumber)) {
+      return res.status(400).json({ message: "El número de teléfono tiene que contener solo números." });
+    }
+    if (!address) {
+      return res.status(400).json({ message: "El campo dirección es un campo obligatiorio." });
+    }
+    if (!validate.address(address)) {
+      return res.status(400).json({ message: "La dirección postal contiene caracteres especiales inválidos." });
     }
     try {
       const newBusiness = await Business.create({

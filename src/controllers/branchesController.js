@@ -8,50 +8,47 @@ import reservationStepper from '../utils/reservationStepper.js';
 
 const branchesController = {
   createBranch: async (req, res) => {
-    const { name, email, phoneNumber, address, capacity, openingTime, closingTime, turnDuration } = req.body;
-    if (!name || !email || !phoneNumber || !address || !capacity || !openingTime || !closingTime|| !turnDuration) {
-      return res.status(400).json({ message: "Todos los campos son obligatorios." });
-    }
+    const { name, email, phoneNumber, address, capacity, openingTime, closingTime, turnDuration } = req.body;    
     if (!name) {
       return res.status(400).json({ message: "El nombre es obligatorio." });
+    }
+    if (!validate.name(name)) {
+      return res.status(400).json({ message: "Nombre inválido." });
     }
     if (!email) {
       return res.status(400).json({ message: "El email es obligatorio." });
     }
+    if (!validate.email(email)) {
+      return res.status(400).json({ message: "Formato de correo electrónico inválido." });
+    }
     if (!phoneNumber) {
       return res.status(400).json({ message: "El teléfono es obligatorio." });
+    }
+    if (!validate.phone(phoneNumber)) {
+      return res.status(400).json({ message: "Formato de número de teléfono inválido." });
     }
     if (!address) {
       return res.status(400).json({ message: "La dirección postal es obligatoria." });
     }
+    if (!validate.address(address)) {
+      return res.status(400).json({ message: "Dirección postal inválida." });
+    }
     if (!capacity) {
       return res.status(400).json({ message: "La capacidad de la sucursal es obligatoria." });
+    }
+    if (!validate.capacity(capacity)) {
+      return res.status(400).json({ message: "Capacidad inválida." });
     }
     if (!openingTime) {
       return res.status(400).json({ message: "La hora de apertura es obligatoria." });
     }
-    if (!closingTime) {
-      return res.status(400).json({ message: "La hora de cierre es obligatoria." });
-    }  
-    if (!validate.validateName(name)) {
-      return res.status(400).json({ message: "Nombre inválido." });
-    }
-    if (!validate.validateEmail(email)) {
-      return res.status(400).json({ message: "Formato de correo electrónico inválido." });
-    }
-    if (!validate.validatePhone(phoneNumber)) {
-      return res.status(400).json({ message: "Formato de número de teléfono inválido." });
-    }
-    if (!validate.validateAddress(address)) {
-      return res.status(400).json({ message: "Dirección postal inválida." });
-    }
-    if (!validate.validateCapacity(capacity)) {
-      return res.status(400).json({ message: "Capacidad inválida." });
-    }
-    if (!validate.validateTime(openingTime)) {
+    if (!validate.time(openingTime)) {
       return res.status(400).json({ message: "Horario de apertura inválido." });
     }
-    if (!validate.validateTime(closingTime)) {
+    if (!closingTime) {
+      return res.status(400).json({ message: "La hora de cierre es obligatoria." });
+    } 
+    if (!validate.time(closingTime)) {
       return res.status(400).json({ message: "Horario de cierre inválido." });
     }
     if (turnDuration && !validate.turnDuration(turnDuration)) {
@@ -78,25 +75,25 @@ const branchesController = {
   updateBranch: async (req, res) => {
     const branchId = req.params.id;
     const { name, email, phoneNumber, address, capacity, openingTime, closingTime, turnDuration } = req.body; 
-    if (name && !validate.validateName(name)) {
+    if (name && !validate.name(name)) {
       return res.status(400).json({ message: "Nombre inválido." });
     }
-    if (email && !validate.validateEmail(email)) {
+    if (email && !validate.email(email)) {
       return res.status(400).json({ message: "Formato de correo electrónico inválido." });
     }
-    if (phoneNumber && !validate.validatePhone(phoneNumber)) {
+    if (phoneNumber && !validate.phone(phoneNumber)) {
       return res.status(400).json({ message: "Formato de número de teléfono inválido." });
     }
-    if (address && !validate.validateAddress(address)) {
+    if (address && !validate.address(address)) {
       return res.status(400).json({ message: "Dirección inválida." });
     }
-    if (capacity && !validate.validateCapacity(capacity)) {
+    if (capacity && !validate.capacity(capacity)) {
       return res.status(400).json({ message: "Capacidad inválida." });
     }
-    if (openingTime && !validate.validateTime(openingTime)) {
+    if (openingTime && !validate.time(openingTime)) {
       return res.status(400).json({ message: "Horario de apertura inválido." });
     }
-    if (closingTime && !validate.validateTime(closingTime)) {
+    if (closingTime && !validate.time(closingTime)) {
       return res.status(400).json({ message: "Horario de cierre inválido." });
     }
     if (turnDuration && !validate.turnDuration(turnDuration)) {
@@ -118,11 +115,11 @@ const branchesController = {
         turnDuration: turnDuration ?? branch.turnDuration
       };
       await branch.update(updatedData);
-      res.json({ message: 'Sucursal actualizada con éxito', branch: updatedData });
+      res.json({ message: 'Sucursal actualizada con éxito.', branch: updatedData });
     } 
     catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al actualizar la sucursal" });
+      res.status(500).json({ message: "Error al actualizar la sucursal." });
     }
   },
   deleteBranch: async (req, res) => {
@@ -137,7 +134,7 @@ const branchesController = {
     } 
     catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al eliminar la sucursal" });
+      res.status(500).json({ message: "Error al eliminar la sucursal." });
     }
   },
   getBranchesByBusiness: async (req, res) => {
@@ -157,7 +154,7 @@ const branchesController = {
     } 
     catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al obtener las sucursales" });
+      res.status(500).json({ message: "Error al obtener las sucursales." });
     }
   },
   getAssignedBranches: async (req, res) => {
@@ -181,7 +178,7 @@ const branchesController = {
     }
     catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al obtener las sucursales asignadas" });
+      res.status(500).json({ message: "Error al obtener las sucursales asignadas." });
     }
   },
   getAllBranches: async (req, res) => {
@@ -224,7 +221,7 @@ const branchesController = {
     } 
     catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al obtener las sucursales" });
+      res.status(500).json({ message: "Error al obtener las sucursales." });
     }
   },
   getBranchById: async (req, res) => {
@@ -272,7 +269,7 @@ const branchesController = {
     } 
     catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al obtener la información de la sucursal" });
+      res.status(500).json({ message: "Error al obtener la información de la sucursal." });
     }
   },
   getBranchSchedules: async (req, res) => {
@@ -283,10 +280,10 @@ const branchesController = {
         attributes: ['openingTime', 'closingTime', 'turnDuration']
       });
       if (!branch) {
-        return res.status(404).json({ message: 'Sucursal no encontrada' });
+        return res.status(404).json({ message: 'Sucursal no encontrada.' });
       }
       if (req.user.role !== 'admin' && (req.user.role !== 'oper' || req.user.branchId !== branch.id)) {
-        return res.status(403).json({ message: 'Acceso no autorizado' });
+        return res.status(403).json({ message: 'Acceso no autorizado.' });
       }
       const allSchedules = reservationStepper.generateSchedules(branch.openingTime, branch.closingTime, branch.turnDuration);
       const reservations = await Reservation.findAll({ 
@@ -311,7 +308,7 @@ const branchesController = {
         attributes: ['openingTime', 'closingTime', 'turnDuration']
       });
       if (!branch) {
-        return res.status(404).json({ message: 'Sucursal no encontrada' });
+        return res.status(404).json({ message: 'Sucursal no encontrada.' });
       }
 
       const allSchedules = reservationStepper.generateSchedules(branch.openingTime, branch.closingTime, branch.turnDuration);
