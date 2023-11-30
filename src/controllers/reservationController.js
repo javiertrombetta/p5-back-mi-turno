@@ -12,43 +12,74 @@ import dashboard from '../utils/metrics.js';
 
 const reservationController = {
   createReservation: async (req, res) => {
-    const { branchId, date, time } = req.body;
-    const userId = req.user.dni;    
+    const { branchId, date, time, clientName, clientPhone, clientEmail } = req.body;
+    const userId = req.user.dni;   
     if (!userId) {
       return res.status(400).json({ message: "Usuario no encontrado." });
     }
     if (!branchId) {
       return res.status(400).json({ message: "Se debe ingresar una sucursal." });
     }
-    if (!date) {
-      return res.status(400).json({ message: "Se debe ingresar una fecha." });
-    }
-    if (!time) {
-      return res.status(400).json({ message: "Se debe ingresar una hora." });
-    }
     if (!validate.id(branchId)) {
       return res.status(400).json({ message: "La sucursal ingresada es inválida." });
+    }
+    if (!date) {
+      return res.status(400).json({ message: "Se debe ingresar una fecha." });
     }
     if (!validate.date(date)) {
       return res.status(400).json({ message: "La fecha seleccionada es inválida" });
     }
+    if (!time) {
+      return res.status(400).json({ message: "Se debe ingresar una hora." });
+    }  
     if (!validate.time(time)) {
       return res.status(400).json({ message: "El horario seleccionado es inválido" });
-    }        
+    }
+    if (!clientName) {
+      return res.status(400).json({ message: "Se debe ingresar un nombre y apellido de la persona que asista." });
+    }
+    if (!validate.name(clientName)) {
+      return res.status(400).json({ message: "El nombre y apellido no puede contener caracteres especiales." });
+    }
+    if (!clientPhone) {
+      return res.status(400).json({ message: "Se debe ingresar un número de contacto de la persona que asista." });
+    }
+    if (!validate.phone(clientPhone)) {
+      return res.status(400).json({ message: "El número de teléfono tiene que ser numérico." });
+    }
+    if (!clientEmail) {
+      return res.status(400).json({ message: "Se debe ingresar un correo electrónico válido de la persona que asista." });
+    }
+    if (!validate.email(clientEmail)) {
+      return res.status(400).json({ message: "Formato de correo electrónico no válido." });
+    }       
     try {
       const newReservation = await Reservation.create({
         userId,
         branchId,
         date,
         time,
-        state: 'pendiente'
+        state: 'pendiente',
+        clientName,
+        clientPhone,
+        clientEmail
       });
-      const mailOptions = emailService.createReservation(req.user, {
+      const userMailOptions = emailService.createReservation(req.user, {
         date: newReservation.date,
         time: newReservation.time,
         branchId: newReservation.branchId
       });
-      await transporter.sendMail(mailOptions);
+      const clientMailOptions = emailService.createReservationForClient(req.user, {
+        clientName,
+        clientEmail,
+        date: newReservation.date,
+        time: newReservation.time,
+        branchId: newReservation.branchId
+      });
+      await transporter.sendMail(userMailOptions);
+      if (req.user.email !== clientEmail) {
+        await transporter.sendMail(clientMailOptions);
+      }
       res.status(201).json(newReservation);
     } catch (error) {
       console.error(error);
@@ -74,7 +105,7 @@ const reservationController = {
             attributes: ['name']
           }
         },
-        attributes: ['id', 'date', 'time', 'state']
+        attributes: ['id', 'date', 'time', 'state', 'clientName', 'clientPhone', 'clientEmail']
       });
       if (userReservations.length > 0)
       {
@@ -101,7 +132,7 @@ const reservationController = {
           model: User,
           attributes: ['dni', 'fullName', 'email']
         },
-        attributes: ['id', 'date', 'time', 'state']
+        attributes: ['id', 'date', 'time', 'state', 'clientName', 'clientPhone', 'clientEmail']
       });
       if (branchReservations.length > 0) {
         res.json(branchReservations);
@@ -130,7 +161,11 @@ const reservationController = {
       const reservation = await Reservation.findByPk(id, {
         include: {
           model: Branch, 
-          as: 'branches'
+          as: 'branches',
+          include: {
+            model: User,
+            attributes: ['email', 'fullName']
+          }
         }
       });
       if (!reservation) {
@@ -141,9 +176,23 @@ const reservationController = {
       }      
       reservation.state = state;
       await reservation.save();
-      res.json({ message: 'Estado de la reserva actualizado con éxito', reservation });
-    } 
-    catch (error) {
+      const userEmail = reservation.User.email;
+      const userName = reservation.User.fullName;
+      if (userEmail) {
+        const mailOptions = emailTemplates.statusUpdateNotification({
+          email: userEmail,
+          fullName: userName,
+          reservationId: id,
+          newState: state
+        });
+
+        await transporter.sendMail(mailOptions);
+      }
+      res.json({ 
+        message: 'Estado de la reserva actualizado con éxito', 
+        reservation
+      });
+    } catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });
     }
@@ -191,7 +240,7 @@ const reservationController = {
             attributes: ['name', 'address']
           }
         ],
-        attributes: ['id', 'date', 'time', 'state']
+        attributes: ['id', 'date', 'time', 'state', 'clientName', 'clientPhone', 'clientEmail']
       });
       const formattedReservations = formatData.formatReservationData(allReservations);
       res.status(200).json(formattedReservations);
@@ -218,7 +267,7 @@ const reservationController = {
             attributes: ['name', 'address']
           }
         ],
-        attributes: ['id', 'date', 'time', 'state']
+        attributes: ['id', 'date', 'time', 'state', 'clientName', 'clientPhone', 'clientEmail']
       });
       if (!reservation) {
         return res.status(404).json({ error: "Reserva no encontrada." });
@@ -232,31 +281,58 @@ const reservationController = {
   },
   modifyReservation: async (req, res) => {
     const reservationId = req.params.id;
-    const { userId, branchId, date, time, state } = req.body;   
-    if (!userId) {
-      return res.status(400).json({ message: "Usuario no proporcionado." });
-    }
-    if (!branchId) {
-      return res.status(400).json({ message: "Sucursal no proporcionada." });
-    }
+    const { userId, branchId, date, time, state, clientName, clientPhone, clientEmail } = req.body;
     if (!validate.id(reservationId)) {
       return res.status(400).json({ message: "Número de reserva inválido." });
+    }    
+    if (!userId) {
+      return res.status(400).json({ message: "Usuario no proporcionado." });
     }
     if (!validate.id(userId)) {
       return res.status(400).json({ message: "Usuario inválido." });
     }
+    if (!branchId) {
+      return res.status(400).json({ message: "Sucursal no proporcionada." });
+    }
     if (!validate.id(branchId)) {
       return res.status(400).json({ message: "Sucursal inválida." });
     }
-    if (date && !validate.date(date)) {
+    if (!date) {
+      return res.status(400).json({ message: "Tenés que ingresar una fecha." });
+    }         
+    if (!validate.date(date)) {
       return res.status(400).json({ message: "Fecha inválida." });
     }
-    if (time && !validate.time(time)) {
+    if (!time) {
+      return res.status(400).json({ message: "Tenés que ingresar una hora." });
+    }
+    if (!validate.time(time)) {
       return res.status(400).json({ message: "Hora inválida." });
     }
-    if (state && !validate.state(state)) {
+    if (!state) {
+      return res.status(400).json({ message: "La reserva tiene que tener un estado." });
+    }
+    if (!validate.state(state)) {
       return res.status(400).json({ message: "Estado inválido." });
-    }  
+    }
+    if (!clientName) {
+      return res.status(400).json({ message: "Nombre del cliente no proporcionado." });
+    }
+    if (!validate.name(clientName)) {
+      return res.status(400).json({ message: "Nombre del cliente inválido." });
+    }
+    if (!clientPhone) {
+      return res.status(400).json({ message: "Teléfono del cliente no proporcionado." });
+    }
+    if (!validate.phone(clientPhone)) {
+      return res.status(400).json({ message: "Teléfono del cliente inválido." });
+    }
+    if (!clientEmail) {
+      return res.status(400).json({ message: "Correo electrónico del cliente no proporcionado." });
+    }
+    if (!validate.email(clientEmail)) {
+      return res.status(400).json({ message: "Correo electrónico del cliente inválido." });
+    } 
     try {
       const reservation = await Reservation.findByPk(reservationId);
       if (!reservation) {
@@ -267,8 +343,11 @@ const reservationController = {
         userId: userId || reservation.userId,
         branchId: branchId || reservation.branchId,
         date: date || reservation.date,
-        time: formattedTime,
-        state: state || reservation.state
+        time: formattedTime || reservation.time,
+        state: state || reservation.state,
+        clientName: clientName || reservation.clientName,
+        clientPhone: clientPhone || reservation.clientPhone,
+        clientEmail: clientEmail || reservation.clientEmail
       });
       const updatedReservation = formatData.formatSingleReservation(reservation);
       res.json({ message: 'Reserva modificada con éxito.', updatedReservation });
@@ -283,16 +362,32 @@ const reservationController = {
       return res.status(400).json({ message: "Número de reserva inválido." });
     }  
     try {
-      const reservation = await Reservation.findByPk(reservationId);
+      const reservation = await Reservation.findByPk(reservationId, {
+        include: {
+          model: User,
+          attributes: ['email', 'fullName']
+        }
+      });
       if (!reservation) {
-        return res.status(404).json({ message: 'Reserva no encontrada.' });      }
+        return res.status(404).json({ message: 'Reserva no encontrada.' });
+      }
+      const userEmail = reservation.User.email;
+      const userName = reservation.User.fullName;
+      if (userEmail) {
+        const mailOptions = emailTemplates.cancellationNotification({ 
+          email: userEmail, 
+          fullName: userName, 
+          reservationId 
+        });
+        await transporter.sendMail(mailOptions);
+      }
       await reservation.destroy();
       res.json({ message: 'Reserva eliminada con éxito.' });
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: 'Error al eliminar la reserva.' });
     }
-  }  
+  }
 };
 
 export default reservationController;

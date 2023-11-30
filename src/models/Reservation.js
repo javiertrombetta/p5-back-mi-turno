@@ -15,13 +15,24 @@ Reservation.init({
     allowNull: false,
   },
   time: {
-    type: Sequelize.INTEGER,
+    type: Sequelize.TIME,
     allowNull: false,
   },
   state: {
     type: Sequelize.ENUM("pendiente", "confirmado", "cancelado", "finalizado", "ausente"),
     defaultValue: "pendiente",
-  }
+  },
+  clientName: {
+    type: Sequelize.STRING,
+    allowNull: false,
+  },
+  clientPhone: {
+    type: Sequelize.INTEGER,
+  },
+  clientEmail: {
+    type: Sequelize.STRING,
+    allowNull: false,
+  },
 }, 
 { sequelize: sequelize, modelName: "reservations" });
 
