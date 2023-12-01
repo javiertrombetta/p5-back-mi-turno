@@ -1,11 +1,11 @@
-const branchesController = require("./branchesController");
-const bussinesController = require("./businessController");
-const reservationController = require("./reservationController");
-const userController = require("./userController");
+import branchesController from './branchesController';
+import businessController from './businessController';
+import reservationController from './reservationController';
+import userController from './userController';
 
-module.exports = {
+export default {
   branchesController,
-  bussinesController,
+  businessController,
   reservationController,
   userController,
 };

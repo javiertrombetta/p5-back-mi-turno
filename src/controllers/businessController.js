@@ -1,22 +1,33 @@
-import Business from "../models/Business.js";
-import Branch from "../models/Branch.js";
+import models from "../models/index.js";
+import validate from '../utils/validations.js';
 
-import { validateName, validateEmail, validatePhone } from '../utils/validations.js';
-
+const { Branch, Business }  = models;
 const businessController = {  
   createBusiness: async (req, res) => {
     const { name, email, phoneNumber, address } = req.body;  
-    if (!name || !address) {
-      return res.status(400).json({ message: "Nombre y dirección son campos obligatorios." });
-    }
-    if (!validateName(name)) {
+    if (!name) {
+      return res.status(400).json({ message: "El nombre es un campo obligatorio." });
+    }   
+    if (!validate.name(name)) {
       return res.status(400).json({ message: "El nombre contiene caracteres inválidos." });
     }
-    if (email && !validateEmail(email)) {
-      return res.status(400).json({ message: "Formato de correo electrónico inválido." });
+    if (!email) {
+      return res.status(400).json({ message: "El campo email es obligatorio." });
     }
-    if (phoneNumber && !validatePhone(phoneNumber)) {
-      return res.status(400).json({ message: "Formato de número de teléfono inválido." });
+    if (!validate.email(email)) {
+      return res.status(400).json({ message: "El email tiene un formato incorrecto." });
+    }
+    if (!phoneNumber) {
+      return res.status(400).json({ message: "El número de teléfono es obligatorio." });
+    }
+    if (!validate.phone(phoneNumber)) {
+      return res.status(400).json({ message: "El número de teléfono tiene que contener solo números." });
+    }
+    if (!address) {
+      return res.status(400).json({ message: "El campo dirección es un campo obligatiorio." });
+    }
+    if (!validate.address(address)) {
+      return res.status(400).json({ message: "La dirección postal contiene caracteres especiales inválidos." });
     }
     try {
       const newBusiness = await Business.create({
@@ -35,14 +46,20 @@ const businessController = {
   updateBusiness: async (req, res) => {
     const { id } = req.params;
     const { name, email, phoneNumber, address } = req.body;
-    if (name && !validateName(name)) {
-        return res.status(400).json({ message: "El nombre contiene caracteres inválidos." });
+    if (!validate.id(id)) {
+      return res.status(400).json({ message: "ID de sucursal inválida." });
     }
-    if (email && !validateEmail(email)) {
-        return res.status(400).json({ message: "Formato de correo electrónico inválido." });
+    if (name && !validate.name(name)) {
+      return res.status(400).json({ message: "El nombre contiene caracteres inválidos." });
     }
-    if (phoneNumber && !validatePhone(phoneNumber)) {
-        return res.status(400).json({ message: "Formato de número de teléfono inválido." });
+    if (email && !validate.email(email)) {
+      return res.status(400).json({ message: "Formato de correo electrónico inválido." });
+    }
+    if (phoneNumber && !validate.phone(phoneNumber)) {
+      return res.status(400).json({ message: "Formato de número de teléfono inválido." });
+    }
+    if (address && !validate.address(address)) {
+      return res.status(400).json({ message: "Formato de dirección postal inválida" });
     }
     try {
       const business = await Business.findByPk(id);
@@ -63,7 +80,7 @@ const businessController = {
     }
   },
   deleteBusiness: async (req, res) => {
-    const { id } = req.params;
+    const { id } = req.params;  
     try {
       const business = await Business.findByPk(id);
       if (!business) {
@@ -121,7 +138,7 @@ const businessController = {
     } 
     catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al obtener la empresa" });
+      res.status(500).json({ message: "Error al obtener la empresa." });
     }
   }
 }; 

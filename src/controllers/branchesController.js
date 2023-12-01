@@ -1,32 +1,58 @@
-import Branch from "../models/Branch.js";
-import Business from "../models/Business.js";
-import User from "../models/User.js";
+import Sequelize from 'sequelize';
+import models from "../models/index.js";
+import validate from '../utils/validations.js';
+import reservationStepper from '../utils/reservationStepper.js';
 
-import { validateName, validateEmail, validatePhone, validateAddress, validateCapacity, validateTime } from '../utils/validations.js';
+const Op = Sequelize.Op;
+const { Branch, Business, User, Reservation } = models;
 
 const branchesController = {
   createBranch: async (req, res) => {
-    const { name, email, phoneNumber, address, capacity, openingTime, closingTime } = req.body;
-    if (!name || !email || !phoneNumber || !address || !capacity || !openingTime || !closingTime) {
-      return res.status(400).json({ message: "Todos los campos son obligatorios." });
+    const { name, email, phoneNumber, address, capacity, openingTime, closingTime, turnDuration } = req.body;    
+    if (!name) {
+      return res.status(400).json({ message: "El nombre es obligatorio." });
     }
-    if (!validateName(name)) {
+    if (!validate.name(name)) {
       return res.status(400).json({ message: "Nombre inválido." });
     }
-    if (!validateEmail(email)) {
+    if (!email) {
+      return res.status(400).json({ message: "El email es obligatorio." });
+    }
+    if (!validate.email(email)) {
       return res.status(400).json({ message: "Formato de correo electrónico inválido." });
     }
-    if (!validatePhone(phoneNumber)) {
+    if (!phoneNumber) {
+      return res.status(400).json({ message: "El teléfono es obligatorio." });
+    }
+    if (!validate.phone(phoneNumber)) {
       return res.status(400).json({ message: "Formato de número de teléfono inválido." });
     }
-    if (!validateAddress(address)) {
-      return res.status(400).json({ message: "Dirección inválida." });
+    if (!address) {
+      return res.status(400).json({ message: "La dirección postal es obligatoria." });
     }
-    if (!validateCapacity(capacity)) {
+    if (!validate.address(address)) {
+      return res.status(400).json({ message: "Dirección postal inválida." });
+    }
+    if (!capacity) {
+      return res.status(400).json({ message: "La capacidad de la sucursal es obligatoria." });
+    }
+    if (!validate.capacity(capacity)) {
       return res.status(400).json({ message: "Capacidad inválida." });
     }
-    if (!validateTime(openingTime) || !validateTime(closingTime)) {
-      return res.status(400).json({ message: "Horarios de apertura y cierre inválidos." });
+    if (!openingTime) {
+      return res.status(400).json({ message: "La hora de apertura es obligatoria." });
+    }
+    if (!validate.time(openingTime)) {
+      return res.status(400).json({ message: "Horario de apertura inválido." });
+    }
+    if (!closingTime) {
+      return res.status(400).json({ message: "La hora de cierre es obligatoria." });
+    } 
+    if (!validate.time(closingTime)) {
+      return res.status(400).json({ message: "Horario de cierre inválido." });
+    }
+    if (turnDuration && !validate.turnDuration(turnDuration)) {
+      return res.status(400).json({ message: "Duración de turno inválida." });
     }
     try {
       const newBranch = await Branch.create({
@@ -36,38 +62,42 @@ const branchesController = {
         address,
         capacity,
         openingTime,
-        closingTime
+        closingTime,
+        turnDuration: turnDuration ?? 30
       });
       res.status(201).json(newBranch);
     } 
     catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al crear la sucursal" });
+      res.status(500).json({ message: "Error al crear la sucursal." });
     }
   },
   updateBranch: async (req, res) => {
     const branchId = req.params.id;
-    const { name, email, phoneNumber, address, capacity, openingTime, closingTime } = req.body;
-    if (!name && !email && !phoneNumber && !address && !capacity && !openingTime && !closingTime) {
-      return res.status(400).json({ message: "No hay datos para actualizar." });
-    }
-    if (name && !validateName(name)) {
+    const { name, email, phoneNumber, address, capacity, openingTime, closingTime, turnDuration } = req.body; 
+    if (name && !validate.name(name)) {
       return res.status(400).json({ message: "Nombre inválido." });
     }
-    if (email && !validateEmail(email)) {
+    if (email && !validate.email(email)) {
       return res.status(400).json({ message: "Formato de correo electrónico inválido." });
     }
-    if (phoneNumber && !validatePhone(phoneNumber)) {
+    if (phoneNumber && !validate.phone(phoneNumber)) {
       return res.status(400).json({ message: "Formato de número de teléfono inválido." });
     }
-    if (address && !validateAddress(address)) {
+    if (address && !validate.address(address)) {
       return res.status(400).json({ message: "Dirección inválida." });
     }
-    if (capacity && !validateCapacity(capacity)) {
+    if (capacity && !validate.capacity(capacity)) {
       return res.status(400).json({ message: "Capacidad inválida." });
     }
-    if ((openingTime && !validateTime(openingTime)) || (closingTime && !validateTime(closingTime))) {
-      return res.status(400).json({ message: "Horarios de apertura y cierre inválidos." });
+    if (openingTime && !validate.time(openingTime)) {
+      return res.status(400).json({ message: "Horario de apertura inválido." });
+    }
+    if (closingTime && !validate.time(closingTime)) {
+      return res.status(400).json({ message: "Horario de cierre inválido." });
+    }
+    if (turnDuration && !validate.turnDuration(turnDuration)) {
+      return res.status(400).json({ message: "Duración de turno inválida." });
     }
     try {
       const branch = await Branch.findByPk(branchId);
@@ -81,14 +111,15 @@ const branchesController = {
         address: address ?? branch.address,
         capacity: capacity ?? branch.capacity,
         openingTime: openingTime ?? branch.openingTime,
-        closingTime: closingTime ?? branch.closingTime
+        closingTime: closingTime ?? branch.closingTime,
+        turnDuration: turnDuration ?? branch.turnDuration
       };
       await branch.update(updatedData);
-      res.json({ message: 'Sucursal actualizada con éxito', branch: updatedData });
+      res.json({ message: 'Sucursal actualizada con éxito.', branch: updatedData });
     } 
     catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al actualizar la sucursal" });
+      res.status(500).json({ message: "Error al actualizar la sucursal." });
     }
   },
   deleteBranch: async (req, res) => {
@@ -103,7 +134,7 @@ const branchesController = {
     } 
     catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al eliminar la sucursal" });
+      res.status(500).json({ message: "Error al eliminar la sucursal." });
     }
   },
   getBranchesByBusiness: async (req, res) => {
@@ -114,7 +145,7 @@ const branchesController = {
       }
       const branches = await Branch.findAll({
         where: { businessId: businessId },
-        attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime']
+        attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime', 'turnDuration']
         });
       if (branches.length === 0) {
         return res.status(404).json({ message: "No se encontraron sucursales para la empresa indicada." });
@@ -123,7 +154,7 @@ const branchesController = {
     } 
     catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al obtener las sucursales" });
+      res.status(500).json({ message: "Error al obtener las sucursales." });
     }
   },
   getAssignedBranches: async (req, res) => {
@@ -138,7 +169,7 @@ const branchesController = {
           where: { dni: req.user.dni },
           attributes: []
         }],
-        attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime']
+        attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime', 'turnDuration']
       });
       if (assignedBranches.length === 0) {
         return res.status(404).json({ message: "No se encontraron sucursales asignadas al operador." });
@@ -147,100 +178,130 @@ const branchesController = {
     }
     catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al obtener las sucursales asignadas" });
+      res.status(500).json({ message: "Error al obtener las sucursales asignadas." });
     }
   },
   getAllBranches: async (req, res) => {
-    try {
-      let branches;
-      switch (req.user.role) {
-        case 'super':
-          branches = await Branch.findAll({
-            attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime'],
-            include: {
-              model: Business,
-              attributes: ['name']
-            }
-          });
-          break;
-        case 'admin':
-          branches = await Branch.findAll({
-            where: { businessId: req.user.businessId },
-            attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime']
-          });
-          break;
-        case 'oper':
-          branches = await Branch.findAll({
-            include: [{
-              model: User,
-              as: 'operators',
-              where: { dni: req.user.dni },
-              attributes: []
-            }],
-            attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime']
-          });
-          break;
-        default:
-          return res.status(403).json({ message: "Acceso no autorizado." });
+    try {      
+      const branches = await Branch.findAll({
+        attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime', 'turnDuration'],
+        include: {
+          model: Business,      
+          attributes: ['name']
         }
-        if (!branches || branches.length === 0) {
-          return res.status(404).json({ message: "No se encontraron sucursales." });
-        }
-        res.json(branches);
-    } 
-    catch (error) {
+      });  
+      if (!branches || branches.length === 0) {
+        return res.status(404).json({ message: "No se encontraron sucursales." });
+      }
+      res.json(branches);
+    } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al obtener las sucursales" });
+      res.status(500).json({ message: "Error al obtener las sucursales." });
     }
   },
   getBranchById: async (req, res) => {
     const branchId = req.params.id;
     try {
-      let branch;
-      switch (req.user.role) {
-        case 'super':  
-          branch = await Branch.findByPk(branchId, {
-            attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime'],
-            include: {
-              model: Business,
-              attributes: ['name']
-            }
-          });
-          break;
-        case 'admin':
-          branch = await Branch.findOne({
-            where: { 
-              id: branchId,
-              businessId: req.user.businessId 
-            },
-            attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime']
-          });
-          break;
-        case 'oper':
-          branch = await Branch.findOne({
-            where: { id: branchId },
-            include: [{
-              model: User,
-              as: 'operators',
-              where: { dni: req.user.dni },
-              attributes: []
-            }],
-            attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime']
-          });
-          break;
-        default:
-          return res.status(403).json({ message: "Acceso no autorizado." });
+      const branch = await Branch.findByPk(branchId, {
+        attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime', 'turnDuration'],
+        include: {
+          model: Business,
+          attributes: ['name']
         }
-        if (!branch) {
-          return res.status(404).json({ message: "Sucursal no encontrada." });
-        }
-        res.json(branch);
-    } 
-    catch (error) {
+      });
+      if (!branch) {
+        return res.status(404).json({ message: "Sucursal no encontrada." });
+      }
+      res.json(branch);
+    } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al obtener la información de la sucursal" });
+      res.status(500).json({ message: "Error al obtener la información de la sucursal." });
     }
-  },  
+  },
+  getBranchSchedules: async (req, res) => {
+    const branchId = req.params.id;
+    const queryDate = req.query.date;
+    try {
+      const branch = await Branch.findByPk(branchId, {
+        attributes: ['openingTime', 'closingTime', 'turnDuration']
+      });
+      if (!branch) {
+        return res.status(404).json({ message: 'Sucursal no encontrada.' });
+      }
+      const allSchedules = reservationStepper.generateSchedules(branch.openingTime, branch.closingTime, branch.turnDuration);
+      const reservations = await Reservation.findAll({ 
+        where: { 
+          branchId,
+          date: queryDate
+        } 
+      });
+      const availableSchedules = reservationStepper.filterAvailableSchedules(allSchedules, reservations, queryDate);
+      res.json({ availableSchedules });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+  getAvailableBranchSchedules: async (req, res) => {
+    const branchId = req.params.id;
+    const queryDate = req.query.date;
+
+    try {
+      const branch = await Branch.findByPk(branchId, {
+        attributes: ['openingTime', 'closingTime', 'turnDuration']
+      });
+
+      if (!branch) {
+        return res.status(404).json({ message: 'Sucursal no encontrada.' });
+      }
+
+      const queryStartDate = new Date(queryDate);
+      queryStartDate.setHours(0, 0, 0, 0);
+      const queryEndDate = new Date(queryDate);
+      queryEndDate.setHours(23, 59, 59, 999);
+
+      const reservations = await Reservation.findAll({
+        where: {
+          branchId,
+          date: {
+            [Op.between]: [queryStartDate, queryEndDate]
+          }
+        }
+      });
+
+      const allSchedules = reservationStepper.generateSchedules(branch.openingTime, branch.closingTime, branch.turnDuration);
+      const availableSchedules = reservationStepper.filterAvailableSchedules(allSchedules, reservations, queryDate);
+
+      res.json({ availableSchedules });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+  getCriticalBranchSchedules: async (req, res) => {
+    const branchId = req.params.id;
+    const queryDate = req.query.date;
+    try {
+      const branch = await Branch.findByPk(branchId, {
+        attributes: ['openingTime', 'closingTime', 'turnDuration']
+      });
+      if (!branch) {
+        return res.status(404).json({ message: 'Sucursal no encontrada' });
+      }
+      const allSchedules = reservationStepper.generateSchedules(branch.openingTime, branch.closingTime, branch.turnDuration);
+      const reservations = await Reservation.findAll({ 
+        where: { 
+          branchId,
+          date: queryDate
+        } 
+      });
+      const criticalSchedules = reservationStepper.identifyCriticalSchedules(allSchedules, reservations, queryDate);
+      res.json({ criticalSchedules });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  },
 };
 
 export default branchesController;

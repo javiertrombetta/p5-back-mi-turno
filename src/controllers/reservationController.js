@@ -1,58 +1,97 @@
 import Sequelize from "sequelize";
-import Reservation from "../models/Reservation.js";
-import User from "../models/User.js";
-import Branch from "../models/Branch.js";
-import Business from "../models/Business.js";
-
+import models from "../models/index.js";
 import { transporter } from "../config/mailTransporter.js";
+import validate from '../utils/validations.js';
+import formatData from '../utils/formatData.js';
+import emailService from '../utils/emailTemplates.js';
+import dashboard from '../utils/metrics.js';
 
+const { Branch, Business, User, Reservation }   = models;
 const reservationController = {
   createReservation: async (req, res) => {
-
-    const { branchId, date, time } = req.body;
-    const userId = req.user.dni;
-
-    try {    
-      if (!date || !time || !branchId) {
-        return res.status(400).json({ message: "Datos de la reserva incompletos" });
-      }
+    const { branchId, date, time, clientName, clientPhone, clientEmail } = req.body;
+    const userId = req.user.dni;   
+    if (!userId) {
+      return res.status(400).json({ message: "Usuario no encontrado." });
+    }
+    if (!branchId) {
+      return res.status(400).json({ message: "Se debe ingresar una sucursal." });
+    }
+    if (!validate.id(branchId)) {
+      return res.status(400).json({ message: "La sucursal ingresada es inválida." });
+    }
+    if (!date) {
+      return res.status(400).json({ message: "Se debe ingresar una fecha." });
+    }
+    if (!validate.date(date)) {
+      return res.status(400).json({ message: "La fecha seleccionada es inválida" });
+    }
+    if (!time) {
+      return res.status(400).json({ message: "Se debe ingresar una hora." });
+    }  
+    if (!validate.time(time)) {
+      return res.status(400).json({ message: "El horario seleccionado es inválido" });
+    }
+    if (!clientName) {
+      return res.status(400).json({ message: "Se debe ingresar un nombre y apellido de la persona que asista." });
+    }
+    if (!validate.name(clientName)) {
+      return res.status(400).json({ message: "El nombre y apellido no puede contener caracteres especiales." });
+    }
+    if (!clientPhone) {
+      return res.status(400).json({ message: "Se debe ingresar un número de contacto de la persona que asista." });
+    }
+    if (!validate.phone(clientPhone)) {
+      return res.status(400).json({ message: "El número de teléfono tiene que ser numérico." });
+    }
+    if (!clientEmail) {
+      return res.status(400).json({ message: "Se debe ingresar un correo electrónico válido de la persona que asista." });
+    }
+    if (!validate.email(clientEmail)) {
+      return res.status(400).json({ message: "Formato de correo electrónico no válido." });
+    }       
+    try {
       const newReservation = await Reservation.create({
         userId,
         branchId,
         date,
         time,
-        state: 'pendiente'
+        state: 'pendiente',
+        clientName,
+        clientPhone,
+        clientEmail
       });
-      const mailOptions = {
-        from: process.env.MAIL_USERNAME,
-        to: req.user.email,
-        subject: 'Confirmación de Reserva',
-        html: `<h3>Hola ${req.user.fullName},</h3>
-              <p>Tu reserva se creó con éxito:</p>
-              <ul>
-              <li>Fecha: ${date}</li>
-              <li>Hora: ${time}</li>
-              <li>Sucursal: ${branchId}</li>
-              </ul>
-              <p>Su estado actual es: <b>PENDIENTE</b></p>
-              <p>¡Gracias por utilizar nuestro servicio!</p>
-              <p>Saludos cordiales,</p>
-              <p><b>Grupo 6 de Mi Turno Web App</b></p>`
-
-      };
-
-      await transporter.sendMail(mailOptions);
-
+      const userMailOptions = emailService.createReservation(req.user, {
+        date: newReservation.date,
+        time: newReservation.time,
+        branchId: newReservation.branchId
+      });
+      const clientMailOptions = emailService.createReservationForClient(req.user, {
+        clientName,
+        clientEmail,
+        date: newReservation.date,
+        time: newReservation.time,
+        branchId: newReservation.branchId
+      });
+      await transporter.sendMail(userMailOptions);
+      if (req.user.email !== clientEmail) {
+        await transporter.sendMail(clientMailOptions);
+      }
       res.status(201).json(newReservation);
-    } 
-    catch (error) {
+    } catch (error) {
       console.error(error);
-      res.status(500).json({ message: "Error al crear la reserva" });
+      res.status(500).json({ message: "Error al crear la reserva." });
     }
   },
   getUserReservations: async (req, res) => {
     try {        
       const userDni = req.user.dni;
+      if (!userDni) {
+        return res.status(400).json({ message: "Usuario no encontrado." });
+      }
+      if (!validate.dni(userDni)) {
+        return res.status(400).json({ message: "DNI inválido." });
+      }
       const userReservations = await Reservation.findAll({
         where: { userId: req.user.dni },
         include: {
@@ -63,7 +102,7 @@ const reservationController = {
             attributes: ['name']
           }
         },
-        attributes: ['id', 'date', 'time', 'state']
+        attributes: ['id', 'date', 'time', 'state', 'clientName', 'clientPhone', 'clientEmail']
       });
       if (userReservations.length > 0)
       {
@@ -71,7 +110,7 @@ const reservationController = {
       } 
       else
       {
-        res.status(404).json({ message: "No se encontraron reservas para el usuario" });
+        res.status(404).json({ message: "No se encontraron reservas para el usuario." });
       }
     } 
     catch (error) {
@@ -90,13 +129,12 @@ const reservationController = {
           model: User,
           attributes: ['dni', 'fullName', 'email']
         },
-        attributes: ['id', 'date', 'time', 'state']
+        attributes: ['id', 'date', 'time', 'state', 'clientName', 'clientPhone', 'clientEmail']
       });
-
       if (branchReservations.length > 0) {
         res.json(branchReservations);
       } else {
-        res.status(404).json({ message: "No se encontraron reservas para la sucursal" });
+        res.status(404).json({ message: "No se encontraron reservas para la sucursal." });
       }
     } 
     catch (error) {
@@ -106,116 +144,82 @@ const reservationController = {
   },
   updateReservationStatus: async (req, res) => {
     const { id } = req.params;
-    const { state } = req.body;
-
+    const { state } = req.body;    
+    if (!state) {
+      return res.status(400).json({ message: "Estado de reserva no ingresado." });
+    }
+    if (!validate.id(id)) {
+      return res.status(400).json({ message: "El número de reserva es inválido." });
+    }
+    if (!validate.state(state)) {
+      return res.status(400).json({ message: "El estado de la reserva es inválido." });
+    }    
     try {
       const reservation = await Reservation.findByPk(id, {
         include: {
           model: Branch, 
-          as: 'branches'
+          as: 'branches',
+          include: {
+            model: User,
+            attributes: ['email', 'fullName']
+          }
         }
       });
       if (!reservation) {
-        return res.status(404).json({ message: 'Reserva no encontrada' });
+        return res.status(404).json({ message: 'Reserva no encontrada.' });
       }
       if (req.user.rol !== 'oper' || reservation.branchId !== req.user.BranchId) {
-        return res.status(403).json({ message: 'Acceso denegado' });
-      }
-      if (!['pendiente', 'confirmado', 'cancelado', 'finalizado', 'ausente'].includes(state)) {
-        return res.status(400).json({ message: 'Estado inválido' });
-      }
+        return res.status(403).json({ message: 'Acceso denegado.' });
+      }      
       reservation.state = state;
       await reservation.save();
-      res.json({ message: 'Estado de la reserva actualizado con éxito', reservation });
-    } 
-    catch (error) {
+      const userEmail = reservation.User.email;
+      const userName = reservation.User.fullName;
+      if (userEmail) {
+        const mailOptions = emailTemplates.statusUpdateNotification({
+          email: userEmail,
+          fullName: userName,
+          reservationId: id,
+          newState: state
+        });
+
+        await transporter.sendMail(mailOptions);
+      }
+      res.json({ 
+        message: 'Estado de la reserva actualizado con éxito', 
+        reservation
+      });
+    } catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });
     }
   },
   getReservationMetrics: async (req, res) => {
+    const adminBusinessId = req.user.BusinessId;
+    if (!adminBusinessId) {
+      return res.status(400).json({ message: 'Información de empresa no disponible.' });
+    }
+    if (!validate.id(adminBusinessId)) {
+      return res.status(400).json({ message: 'Información de empresa inválida.' });
+    }
     try {
-      const adminBusinessId = req.user.BusinessId;
-      if (!adminBusinessId) 
-      {
-        return res.status(400).json({ message: 'Información de empresa no disponible' });
-      }
       const branches = await Branch.findAll({
         where: { businessId: adminBusinessId },
         attributes: ['id', 'name']
       });
       const branchIds = branches.map(branch => branch.id);
       const metrics = {
-        peakTimes: {},
-        averageCancellations: {},
-        mostVisitedBranches: {},
-        operatorCount: {}
+        peakTimes: await dashboard.getPeakTimes(branchIds),
+        averageCancellations: await dashboard.getAverageCancellations(branchIds, branches.length),
+        mostVisitedBranches: await dashboard.getMostVisitedBranches(branchIds),
+        operatorCount: await dashboard.getOperatorCount(branchIds)
       };
-
-      const peakTimes = await Reservation.findAll({
-        attributes: [
-          [Sequelize.fn('date_part', 'hour', Sequelize.col('date')), 'hour'],
-          [Sequelize.fn('count', Sequelize.col('id')), 'count']
-        ],
-        where: {
-          branchId: branchIds,
-          state: ['confirmado', 'finalizado']
-        },
-        group: ['hour'],
-        order: [[Sequelize.fn('count', Sequelize.col('id')), 'DESC']],
-        limit: 1
-      });
-      metrics.peakTimes = peakTimes;
-
-      const cancellationCounts = await Reservation.findAll({
-        attributes: [
-          'branchId',
-          [Sequelize.fn('count', Sequelize.col('id')), 'cancelCount']
-        ],
-        where: {
-          branchId: branchIds,
-          state: 'cancelado'
-        },
-        group: ['branchId']
-      });
-      cancellationCounts.forEach(cancelCount => {
-        metrics.averageCancellations[cancelCount.branchId] = cancelCount.cancelCount / branches.length;
-      }); 
-
-      const visitedCounts = await Reservation.findAll({
-        attributes: [
-          'branchId',
-          [Sequelize.fn('count', Sequelize.col('id')), 'visitCount']
-        ],
-        where: {
-          branchId: branchIds,
-          state: 'finalizado'
-        },
-        group: ['branchId'],
-        order: [[Sequelize.fn('count', Sequelize.col('id')), 'DESC']],
-        limit: 1
-      });
-      metrics.mostVisitedBranches = visitedCounts;
-   
-      const operatorsCount = await User.count({
-        where: {
-          role: 'oper',
-          BranchId: branchIds
-        },
-        group: ['BranchId']
-      });
-      operatorsCount.forEach(count => {
-        metrics.operatorCount[count.BranchId] = count.count;
-      });
-
       res.json({ metrics });
-
-    } 
-    catch (error) {
+    } catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });
     }
-  },  
+  },
   getAllReservations: async (req, res) => {
     try {
       const allReservations = await Reservation.findAll({
@@ -233,100 +237,173 @@ const reservationController = {
             attributes: ['name', 'address']
           }
         ],
-        attributes: ['id', 'date', 'time', 'state']
+        attributes: ['id', 'date', 'time', 'state', 'clientName', 'clientPhone', 'clientEmail']
       });
-      const formattedReservations = allReservations.map(reservation => {
-        const timeString = reservation.time.toString().padStart(4, '0');
-        const formattedTime = `${timeString.substring(0, 2)}:${timeString.substring(2)}`;
-        return {
-          ...reservation.get({ plain: true }),
-          date: reservation.date.toISOString().substring(0, 10),
-          time: formattedTime
-        };
-      });
+      const formattedReservations = formatData.formatReservationData(allReservations);
       res.status(200).json(formattedReservations);
-    } 
-    catch (error) {
+    } catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });
     }
   },
   getReservationById: async (req, res) => {
+    const reservationId = req.params.id;
+    const userId = req.user.dni;
+    const userRole = req.user.role;
+    if (!userId) {
+      return res.status(400).json({ message: "Usuario no encontrado." });
+    }
+    if (!validate.dni(userId)) {
+      return res.status(400).json({ message: "DNI inválido." });
+    }
+    if (!userRole) {
+      return res.status(400).json({ message: "El usuario tiene un rol inválido." });
+    }
+    if (!validate.role(userRole)) {
+      return res.status(400).json({ message: "El rol del usuario es inválido." });
+    }
     try {
-      const reservationId = req.params.id;
-      const reservation = await Reservation.findByPk(reservationId, {
-        include: [
-          {
-            model: User,          
-            attributes: ['dni', 'fullName', 'email']
-          },
-          {
-            model: Branch,
-            include: {
-              model: Business,        
-              attributes: ['name', 'email']
-            },
-            attributes: ['name', 'address']
-          }
-        ],
-        attributes: ['id', 'date', 'time', 'state']
-      });
-      if (!reservation) {
-        return res.status(404).json({ error: "Reserva no encontrada" });
-      }
-      const timeString = reservation.time.toString().padStart(4, '0');
-      const formattedTime = `${timeString.substring(0, 2)}:${timeString.substring(2)}`;
-      const formattedReservation = {
-        ...reservation.get({ plain: true }),
-        date: reservation.date.toISOString().substring(0, 10),
-        time: formattedTime
-      };
-      res.json(formattedReservation);
-    } 
-    catch (error) {
-      console.error(error);
-      res.status(500).json({ error: error.message });
+        const reservation = await Reservation.findByPk(reservationId, {
+            include: [
+                {
+                    model: User,          
+                    attributes: ['dni', 'fullName', 'email']
+                },
+                {
+                    model: Branch,
+                    include: {
+                        model: Business,        
+                        attributes: ['name', 'email']
+                    },
+                    attributes: ['name', 'address']
+                }
+            ],
+            attributes: ['id', 'date', 'time', 'state', 'clientName', 'clientPhone', 'clientEmail', 'userId']
+        });
+
+        if (!reservation) {
+            return res.status(404).json({ error: "Reserva no encontrada." });
+        }
+        if (userRole !== 'super' && reservation.userId !== userId) {
+            return res.status(403).json({ error: "Acceso denegado." });
+        }
+
+        const formattedReservation = formatData.formatSingleReservation(reservation);
+        res.json(formattedReservation);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
     }
   },
   modifyReservation: async (req, res) => {
     const reservationId = req.params.id;
-    const { userId, branchId, date, time, state } = req.body;
-
+    const { userId, branchId, date, time, state, clientName, clientPhone, clientEmail } = req.body;
+    if (!validate.id(reservationId)) {
+      return res.status(400).json({ message: "Número de reserva inválido." });
+    }    
+    if (!userId) {
+      return res.status(400).json({ message: "Usuario no proporcionado." });
+    }
+    if (!validate.id(userId)) {
+      return res.status(400).json({ message: "Usuario inválido." });
+    }
+    if (!branchId) {
+      return res.status(400).json({ message: "Sucursal no proporcionada." });
+    }
+    if (!validate.id(branchId)) {
+      return res.status(400).json({ message: "Sucursal inválida." });
+    }
+    if (!date) {
+      return res.status(400).json({ message: "Tenés que ingresar una fecha." });
+    }         
+    if (!validate.date(date)) {
+      return res.status(400).json({ message: "Fecha inválida." });
+    }
+    if (!time) {
+      return res.status(400).json({ message: "Tenés que ingresar una hora." });
+    }
+    if (!validate.time(time)) {
+      return res.status(400).json({ message: "Hora inválida." });
+    }
+    if (!state) {
+      return res.status(400).json({ message: "La reserva tiene que tener un estado." });
+    }
+    if (!validate.state(state)) {
+      return res.status(400).json({ message: "Estado inválido." });
+    }
+    if (!clientName) {
+      return res.status(400).json({ message: "Nombre del cliente no proporcionado." });
+    }
+    if (!validate.name(clientName)) {
+      return res.status(400).json({ message: "Nombre del cliente inválido." });
+    }
+    if (!clientPhone) {
+      return res.status(400).json({ message: "Teléfono del cliente no proporcionado." });
+    }
+    if (!validate.phone(clientPhone)) {
+      return res.status(400).json({ message: "Teléfono del cliente inválido." });
+    }
+    if (!clientEmail) {
+      return res.status(400).json({ message: "Correo electrónico del cliente no proporcionado." });
+    }
+    if (!validate.email(clientEmail)) {
+      return res.status(400).json({ message: "Correo electrónico del cliente inválido." });
+    } 
     try {
       const reservation = await Reservation.findByPk(reservationId);
       if (!reservation) {
-        return res.status(404).json({ message: 'Reserva no encontrada' });
+        return res.status(404).json({ message: 'Reserva no encontrada.' });
       }
-      const formattedTime = time.toString().padStart(4, '0').replace(/(\d{2})(\d{2})/, '$1:$2');
+      const formattedTime = formatData.formatTime(time);
       await reservation.update({
         userId: userId || reservation.userId,
         branchId: branchId || reservation.branchId,
         date: date || reservation.date,
-        time: formattedTime,
-        state: state || reservation.state
+        time: formattedTime || reservation.time,
+        state: state || reservation.state,
+        clientName: clientName || reservation.clientName,
+        clientPhone: clientPhone || reservation.clientPhone,
+        clientEmail: clientEmail || reservation.clientEmail
       });
-      res.json({ message: 'Reserva modificada con éxito', reservation });
-    } 
-    catch (error) {
+      const updatedReservation = formatData.formatSingleReservation(reservation);
+      res.json({ message: 'Reserva modificada con éxito.', updatedReservation });
+    } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'Error al modificar la reserva' });
+      res.status(500).json({ error: 'Error al modificar la reserva.' });
     }
-  },
+  },  
   deleteReservation: async (req, res) => {
-    const reservationId = req.params.id;
+    const reservationId = req.params.id;    
+    if (!validate.id(reservationId)) {
+      return res.status(400).json({ message: "Número de reserva inválido." });
+    }  
     try {
-      const reservation = await Reservation.findByPk(reservationId);
+      const reservation = await Reservation.findByPk(reservationId, {
+        include: {
+          model: User,
+          attributes: ['email', 'fullName']
+        }
+      });
       if (!reservation) {
-        return res.status(404).json({ message: 'Reserva no encontrada' });
+        return res.status(404).json({ message: 'Reserva no encontrada.' });
+      }
+      const userEmail = reservation.User.email;
+      const userName = reservation.User.fullName;
+      if (userEmail) {
+        const mailOptions = emailTemplates.cancellationNotification({ 
+          email: userEmail, 
+          fullName: userName, 
+          reservationId 
+        });
+        await transporter.sendMail(mailOptions);
       }
       await reservation.destroy();
-      res.json({ message: 'Reserva eliminada con éxito' });
-    }
-    catch (error) {
+      res.json({ message: 'Reserva eliminada con éxito.' });
+    } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'Error al eliminar la reserva' });
+      res.status(500).json({ error: 'Error al eliminar la reserva.' });
     }
-  }  
+  }
 };
 
 export default reservationController;
