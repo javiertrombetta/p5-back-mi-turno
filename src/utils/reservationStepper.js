@@ -1,4 +1,9 @@
+function formatTime(time) {
+  const [hours, minutes] = time.split(':');
+  return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}`;
+}
 const reservationStepper = {
+  
   incrementTime: (time, duration) => {
     const [hours, minutes] = time.split(':').map(Number);
     const timeInMinutes = hours * 60 + minutes + duration;
@@ -10,16 +15,22 @@ const reservationStepper = {
     const schedules = [];
     let currentTime = openingTime;
     while (currentTime < closingTime) {
-      schedules.push(currentTime);
+      schedules.push(formatTime(currentTime));
       currentTime = reservationStepper.incrementTime(currentTime, turnDuration);
     }
     return schedules;
   },
   filterAvailableSchedules: (schedules, reservations, date) => {
+    
+
     const reservedTimes = reservations
       .filter(reservation => reservation.date === date)
-      .map(reservation => reservation.time);
-    return schedules.filter(schedule => !reservedTimes.includes(schedule));
+      .map(reservation => formatTime(reservation.time));
+
+    return schedules.filter(schedule => {
+      const formattedSchedule = formatTime(schedule);
+      return !reservedTimes.includes(formattedSchedule);
+    });
   },
   identifyCriticalSchedules: (schedules, reservations, date, criticalLimit = 2) => {
     const reservationCounts = reservations

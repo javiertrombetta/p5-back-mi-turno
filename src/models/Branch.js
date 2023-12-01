@@ -31,11 +31,11 @@ Branch.init(
       allowNull: false,
     },
     openingTime: {
-      type: Sequelize.STRING,
+      type: Sequelize.TIME,
       allowNull: false,
     },
     closingTime: {
-      type: Sequelize.STRING,
+      type: Sequelize.TIME,
       allowNull: false,
     },
     turnDuration: {
