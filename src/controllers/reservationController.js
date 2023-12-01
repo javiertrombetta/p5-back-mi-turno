@@ -247,33 +247,52 @@ const reservationController = {
     }
   },
   getReservationById: async (req, res) => {
-    const reservationId = req.params.id;   
-    try {      
-      const reservation = await Reservation.findByPk(reservationId, {
-        include: [
-          {
-            model: User,          
-            attributes: ['dni', 'fullName', 'email']
-          },
-          {
-            model: Branch,
-            include: {
-              model: Business,        
-              attributes: ['name', 'email']
-            },
-            attributes: ['name', 'address']
-          }
-        ],
-        attributes: ['id', 'date', 'time', 'state', 'clientName', 'clientPhone', 'clientEmail']
-      });
-      if (!reservation) {
-        return res.status(404).json({ error: "Reserva no encontrada." });
-      }
-      const formattedReservation = formatData.formatSingleReservation(reservation);
-      res.json(formattedReservation);
+    const reservationId = req.params.id;
+    const userId = req.user.dni;
+    const userRole = req.user.role;
+    if (!userId) {
+      return res.status(400).json({ message: "Usuario no encontrado." });
+    }
+    if (!validate.dni(userId)) {
+      return res.status(400).json({ message: "DNI inválido." });
+    }
+    if (!userRole) {
+      return res.status(400).json({ message: "El usuario tiene un rol inválido." });
+    }
+    if (!validate.role(userRole)) {
+      return res.status(400).json({ message: "El rol del usuario es inválido." });
+    }
+    try {
+        const reservation = await Reservation.findByPk(reservationId, {
+            include: [
+                {
+                    model: User,          
+                    attributes: ['dni', 'fullName', 'email']
+                },
+                {
+                    model: Branch,
+                    include: {
+                        model: Business,        
+                        attributes: ['name', 'email']
+                    },
+                    attributes: ['name', 'address']
+                }
+            ],
+            attributes: ['id', 'date', 'time', 'state', 'clientName', 'clientPhone', 'clientEmail', 'userId']
+        });
+
+        if (!reservation) {
+            return res.status(404).json({ error: "Reserva no encontrada." });
+        }
+        if (userRole !== 'super' && reservation.userId !== userId) {
+            return res.status(403).json({ error: "Acceso denegado." });
+        }
+
+        const formattedReservation = formatData.formatSingleReservation(reservation);
+        res.json(formattedReservation);
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: error.message });
+        console.error(error);
+        res.status(500).json({ error: error.message });
     }
   },
   modifyReservation: async (req, res) => {
