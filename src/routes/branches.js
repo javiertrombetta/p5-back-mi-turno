@@ -14,10 +14,10 @@ router.get('/business/:businessId', auth, checkAdminRole, branchesController.get
 // Operator
 router.get('/assigned', auth, checkOperatorRole, branchesController.getAssignedBranches);
 // All users
-router.get('/:id/schedules', auth, branchesController.getBranchSchedules);
-router.get('/:id/available-schedules', auth, branchesController.getAvailableBranchSchedules);
-router.get('/:id/critical-schedules', auth, branchesController.getCriticalBranchSchedules);
-router.get('/:id', auth, branchesController.getBranchById);
-router.get('/', auth, branchesController.getAllBranches);
+router.get('/:id/schedules', auth, branchesController.getBranchSchedules); //OK
+router.get('/:id/available-schedules', auth, branchesController.getAvailableBranchSchedules); //OK
+router.get('/:id/critical-schedules', auth, branchesController.getCriticalBranchSchedules); //OK
+router.get('/:id', auth, branchesController.getBranchById); //OK
+router.get('/', auth, branchesController.getAllBranches); //OK
 
 export default router;

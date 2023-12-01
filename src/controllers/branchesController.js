@@ -1,11 +1,8 @@
-import Branch from "../models/Branch.js";
-import Business from "../models/Business.js";
-import User from "../models/User.js";
-import Reservation from "../models/Reservation.js";
-
+import models from "../models/index.js";
 import validate from '../utils/validations.js';
 import reservationStepper from '../utils/reservationStepper.js';
 
+const { Branch, Business, User, Reservation } = models;
 const branchesController = {
   createBranch: async (req, res) => {
     const { name, email, phoneNumber, address, capacity, openingTime, closingTime, turnDuration } = req.body;    
@@ -182,44 +179,19 @@ const branchesController = {
     }
   },
   getAllBranches: async (req, res) => {
-    try {
-      let branches;
-      switch (req.user.role) {
-        case 'super':
-          branches = await Branch.findAll({
-            attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime', 'turnDuration'],
-            include: {
-              model: Business,
-              attributes: ['name']
-            }
-          });
-          break;
-        case 'admin':
-          branches = await Branch.findAll({
-            where: { businessId: req.user.businessId },
-            attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime', 'turnDuration']
-          });
-          break;
-        case 'oper':
-          branches = await Branch.findAll({
-            include: [{
-              model: User,
-              as: 'operators',
-              where: { dni: req.user.dni },
-              attributes: []
-            }],
-            attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime', 'turnDuration']
-          });
-          break;
-        default:
-          return res.status(403).json({ message: "Acceso no autorizado." });
+    try {      
+      const branches = await Branch.findAll({
+        attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime', 'turnDuration'],
+        include: {
+          model: Business,      
+          attributes: ['name']
         }
-        if (!branches || branches.length === 0) {
-          return res.status(404).json({ message: "No se encontraron sucursales." });
-        }
-        res.json(branches);
-    } 
-    catch (error) {
+      });  
+      if (!branches || branches.length === 0) {
+        return res.status(404).json({ message: "No se encontraron sucursales." });
+      }
+      res.json(branches);
+    } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Error al obtener las sucursales." });
     }
@@ -227,47 +199,18 @@ const branchesController = {
   getBranchById: async (req, res) => {
     const branchId = req.params.id;
     try {
-      let branch;
-      switch (req.user.role) {
-        case 'super':  
-          branch = await Branch.findByPk(branchId, {
-            attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime', 'turnDuration'],
-            include: {
-              model: Business,
-              attributes: ['name']
-            }
-          });
-          break;
-        case 'admin':
-          branch = await Branch.findOne({
-            where: { 
-              id: branchId,
-              businessId: req.user.businessId 
-            },
-            attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime', 'turnDuration']
-          });
-          break;
-        case 'oper':
-          branch = await Branch.findOne({
-            where: { id: branchId },
-            include: [{
-              model: User,
-              as: 'operators',
-              where: { dni: req.user.dni },
-              attributes: []
-            }],
-            attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime', 'turnDuration']
-          });
-          break;
-        default:
-          return res.status(403).json({ message: "Acceso no autorizado." });
+      const branch = await Branch.findByPk(branchId, {
+        attributes: ['id', 'name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime', 'turnDuration'],
+        include: {
+          model: Business,
+          attributes: ['name']
         }
-        if (!branch) {
-          return res.status(404).json({ message: "Sucursal no encontrada." });
-        }
-        res.json(branch);
-    } 
-    catch (error) {
+      });
+      if (!branch) {
+        return res.status(404).json({ message: "Sucursal no encontrada." });
+      }
+      res.json(branch);
+    } catch (error) {
       console.error(error);
       res.status(500).json({ message: "Error al obtener la información de la sucursal." });
     }
@@ -279,12 +222,11 @@ const branchesController = {
       const branch = await Branch.findByPk(branchId, {
         attributes: ['openingTime', 'closingTime', 'turnDuration']
       });
+
       if (!branch) {
         return res.status(404).json({ message: 'Sucursal no encontrada.' });
       }
-      if (req.user.role !== 'admin' && (req.user.role !== 'oper' || req.user.branchId !== branch.id)) {
-        return res.status(403).json({ message: 'Acceso no autorizado.' });
-      }
+
       const allSchedules = reservationStepper.generateSchedules(branch.openingTime, branch.closingTime, branch.turnDuration);
       const reservations = await Reservation.findAll({ 
         where: { 

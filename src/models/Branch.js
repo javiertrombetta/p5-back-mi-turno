@@ -43,6 +43,13 @@ Branch.init(
       allowNull: false,
       defaultValue: 30
     },
+    businessId: {
+      type: Sequelize.INTEGER,
+      references: {
+        model: 'businesses',
+        key: 'id'
+      }
+    },
   },
   { sequelize: sequelize, modelName: "branches", timestamps: false }
 );

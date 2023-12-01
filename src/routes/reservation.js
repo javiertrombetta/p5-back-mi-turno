@@ -8,7 +8,7 @@ const router = express.Router();
 
 //All users
 router.post('/', auth, reservationController.createReservation); 
-router.get('/me', auth, reservationController.getUserReservations);
+router.get('/me', auth, reservationController.getUserReservations); //OK
 //Operator
 router.put('/status/:id', auth, checkOperatorRole, reservationController.updateReservationStatus);
 router.get('/branch', auth, checkOperatorRole, reservationController.getBranchReservations);
