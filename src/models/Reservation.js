@@ -33,6 +33,22 @@ Reservation.init({
     type: Sequelize.STRING,
     allowNull: false,
   },
+  branchId: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'branches',
+      key: 'id',
+    }
+  },
+  userId: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'dni',
+    }
+  }
 }, 
 { sequelize: sequelize, modelName: "reservations" });
 

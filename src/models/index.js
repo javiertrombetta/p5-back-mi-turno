@@ -1,26 +1,29 @@
-const db = require('../config/database');
-const Business = require('./Business');
-const User = require('./User');
-const Reservation = require('./Reservation');
-const Branch = require('./Branch');
+import Business from './Business.js';
+import User from './User.js';
+import Reservation from './Reservation.js';
+import Branch from './Branch.js';
 
-Branch.belongsTo(Business, { foreignKey: 'businessId' });
 Branch.hasMany(Reservation, { foreignKey: 'branchId' });
-Branch.hasMany(User, { foreignKey: 'branchId' });
-Branch.belongsToMany(User, { through: 'UserBranches', foreignKey: 'branchId' });
 Reservation.belongsTo(Branch, { foreignKey: 'branchId' });
-Reservation.belongsTo(User, { foreignKey: 'userId' });
-User.hasMany(Reservation, { foreignKey: 'userId' });
-User.belongsToMany(Branch, { through: 'UserBranches', foreignKey: 'userId' });
-User.belongsTo(Business, { foreignKey: 'businessId' });
-User.belongsTo(Branch, { foreignKey: 'branchId' });
-Business.hasMany(Branch, { foreignKey: 'businessId' });
-Business.hasMany(User, { foreignKey: 'businessId' });
 
-module.exports = {
-  db,
+Branch.hasMany(User, { foreignKey: 'branchId' });
+User.belongsTo(Branch, { foreignKey: 'branchId' });
+
+User.hasMany(Reservation, { foreignKey: 'userId' });
+Reservation.belongsTo(User, { foreignKey: 'userId' });
+
+Business.hasMany(User, { foreignKey: 'businessId' });
+User.belongsTo(Business, { foreignKey: 'businessId' });
+
+Business.hasMany(Branch, { foreignKey: 'businessId' });
+Branch.belongsTo(Business, { foreignKey: 'businessId' });
+
+Branch.belongsToMany(User, { through: 'UserBranches', foreignKey: 'branchId' });
+User.belongsToMany(Branch, { through: 'UserBranches', foreignKey: 'userId' });
+
+export default {
   Business,
   User,
-  Reservation,  
+  Reservation,
   Branch
 };

@@ -1,14 +1,12 @@
 import Sequelize from "sequelize";
-import User from "../models/User.js";
-import Branch from "../models/Branch.js";
-import Business from "../models/Business.js";
-
+import models from "../models/index.js";
 import bcrypt from "bcrypt";
 import { generateToken } from "../config/tokens.js";
 import { transporter } from "../config/mailTransporter.js";
 import validate from "../utils/validations.js";
 import emailTemplates from "../utils/emailTemplates.js";
 
+const { User, Branch, Business } = models;
 const userController = {
   register: async (req, res) => {
     const { fullName, dni, email, password } = req.body;
@@ -49,6 +47,7 @@ const userController = {
     }
     try {
       const userExist = await User.findOne({ where: { dni } });
+      console.log("USUARIO EXISTENTE:", userExist);
       if (userExist) {
         return res.status(400).json({ message: "El usuario ya se encuentra registrado." });
       }
@@ -59,11 +58,15 @@ const userController = {
         email,
         password: hashedPassword,
       });
+      /*
       const mailOptions = emailTemplates.welcome(newUser);
       await transporter.sendMail(mailOptions);
+      */
       const userResponse = { ...newUser.toJSON(), password: undefined };
+      console.log("RESPUESTA:", userResponse);
       res.status(201).json(userResponse);
-    } catch (error) {
+    } 
+    catch (error) {
       console.error(error);
       res.status(500).json({ message: "Error al registrar el usuario." });
     }
