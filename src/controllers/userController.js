@@ -9,7 +9,7 @@ import emailTemplates from "../utils/emailTemplates.js";
 const { User, Branch, Business } = models;
 const userController = {
   register: async (req, res) => {
-    const { fullName, dni, email, password } = req.body;
+    const { fullName, dni, email, phoneNumber, password } = req.body;
     if (!fullName) {
       return res.status(400).json({ message: "Nombre completo no proporcionado." });
     }
@@ -29,6 +29,12 @@ const userController = {
     if (!validate.email(email)) {
       return res.status(400).json({ message: "El email tiene un formato incorrecto." });
     }
+    if (!phoneNumber) {
+      return res.status(400).json({ message: "Número de teléfono no proporcionado." });
+    }
+    if (!validate.phone(phoneNumber)) {
+      return res.status(400).json({ message: "El número de teléfono tiene un formato incorrecto." });
+    }
     if (!password) {
       return res.status(400).json({ message: "Contraseña no proporcionada." });
     }
@@ -47,7 +53,6 @@ const userController = {
     }
     try {
       const userExist = await User.findOne({ where: { dni } });
-      console.log("USUARIO EXISTENTE:", userExist);
       if (userExist) {
         return res.status(400).json({ message: "El usuario ya se encuentra registrado." });
       }
@@ -56,14 +61,12 @@ const userController = {
         fullName,
         dni,
         email,
+        phoneNumber,
         password: hashedPassword,
-      });
-      /*
+      });      
       const mailOptions = emailTemplates.welcome(newUser);
-      await transporter.sendMail(mailOptions);
-      */
+      await transporter.sendMail(mailOptions);      
       const userResponse = { ...newUser.toJSON(), password: undefined };
-      console.log("RESPUESTA:", userResponse);
       res.status(201).json(userResponse);
     } 
     catch (error) {
