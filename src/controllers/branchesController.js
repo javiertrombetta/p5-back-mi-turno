@@ -1,8 +1,11 @@
+import Sequelize from 'sequelize';
 import models from "../models/index.js";
 import validate from '../utils/validations.js';
 import reservationStepper from '../utils/reservationStepper.js';
 
+const Op = Sequelize.Op;
 const { Branch, Business, User, Reservation } = models;
+
 const branchesController = {
   createBranch: async (req, res) => {
     const { name, email, phoneNumber, address, capacity, openingTime, closingTime, turnDuration } = req.body;    
@@ -222,11 +225,9 @@ const branchesController = {
       const branch = await Branch.findByPk(branchId, {
         attributes: ['openingTime', 'closingTime', 'turnDuration']
       });
-
       if (!branch) {
         return res.status(404).json({ message: 'Sucursal no encontrada.' });
       }
-
       const allSchedules = reservationStepper.generateSchedules(branch.openingTime, branch.closingTime, branch.turnDuration);
       const reservations = await Reservation.findAll({ 
         where: { 
@@ -235,7 +236,6 @@ const branchesController = {
         } 
       });
       const availableSchedules = reservationStepper.filterAvailableSchedules(allSchedules, reservations, queryDate);
-
       res.json({ availableSchedules });
     } catch (error) {
       console.error(error);
@@ -245,22 +245,33 @@ const branchesController = {
   getAvailableBranchSchedules: async (req, res) => {
     const branchId = req.params.id;
     const queryDate = req.query.date;
+
     try {
       const branch = await Branch.findByPk(branchId, {
         attributes: ['openingTime', 'closingTime', 'turnDuration']
       });
+
       if (!branch) {
         return res.status(404).json({ message: 'Sucursal no encontrada.' });
       }
 
-      const allSchedules = reservationStepper.generateSchedules(branch.openingTime, branch.closingTime, branch.turnDuration);
-      const reservations = await Reservation.findAll({ 
-        where: { 
+      const queryStartDate = new Date(queryDate);
+      queryStartDate.setHours(0, 0, 0, 0);
+      const queryEndDate = new Date(queryDate);
+      queryEndDate.setHours(23, 59, 59, 999);
+
+      const reservations = await Reservation.findAll({
+        where: {
           branchId,
-          date: queryDate
-        } 
+          date: {
+            [Op.between]: [queryStartDate, queryEndDate]
+          }
+        }
       });
+
+      const allSchedules = reservationStepper.generateSchedules(branch.openingTime, branch.closingTime, branch.turnDuration);
       const availableSchedules = reservationStepper.filterAvailableSchedules(allSchedules, reservations, queryDate);
+
       res.json({ availableSchedules });
     } catch (error) {
       console.error(error);

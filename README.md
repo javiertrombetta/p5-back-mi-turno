@@ -39,6 +39,12 @@ Este repositorio contiene el código fuente del backend para **MI TURNO WEB APP*
       npm install
    ```
 
+3. **Populá la base de datos:**
+
+   ```bash
+      npm run seed
+   ```
+
 ### Configuración
 
 Creá un archivo `.env` en el directorio raíz del proyecto y configura las siguientes variables de entorno:

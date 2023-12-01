@@ -9,10 +9,10 @@ const router = express.Router();
 //Any client not logged in
 router.post("/register", userController.register);
 router.post("/login", userController.login);
-router.post("/logout", auth, userController.logout);
 router.post("/forgot-password", userController.mailForgotPassword);
 router.post("/reset-password", userController.mailResetPassword);
 //All users
+router.post("/logout", auth, userController.logout);
 router.put("/me/change-password", auth, userController.changeUserPassword);
 router.put("/me", auth, userController.updateUser);
 router.get("/me", auth, userController.me);

@@ -9,6 +9,7 @@ const router = express.Router();
 //All users
 router.post('/', auth, reservationController.createReservation); 
 router.get('/me', auth, reservationController.getUserReservations); //OK
+router.get('/:id', auth, reservationController.getReservationById);
 //Operator
 router.put('/status/:id', auth, checkOperatorRole, reservationController.updateReservationStatus);
 router.get('/branch', auth, checkOperatorRole, reservationController.getBranchReservations);
@@ -16,7 +17,6 @@ router.get('/branch', auth, checkOperatorRole, reservationController.getBranchRe
 router.get('/metrics', auth, checkAdminRole, reservationController.getReservationMetrics);
 //Super
 router.put('/:id', auth, checkSuperRole, reservationController.modifyReservation);
-router.get('/:id', auth, checkSuperRole, reservationController.getReservationById);
 router.get('/', auth, checkSuperRole, reservationController.getAllReservations);
 router.delete('/:id', auth, checkSuperRole, checkDevEnv, reservationController.deleteReservation);
 
