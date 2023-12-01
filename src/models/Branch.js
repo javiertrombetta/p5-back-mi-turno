@@ -19,7 +19,7 @@ Branch.init(
       allowNull: false,
     },
     phoneNumber: {
-      type: Sequelize.INTEGER,
+      type: Sequelize.BIGINT,
       allowNull: false,
     },
     address: {
@@ -31,12 +31,24 @@ Branch.init(
       allowNull: false,
     },
     openingTime: {
-      type: Sequelize.STRING,
+      type: Sequelize.TIME,
       allowNull: false,
     },
     closingTime: {
-      type: Sequelize.STRING,
+      type: Sequelize.TIME,
       allowNull: false,
+    },
+    turnDuration: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      defaultValue: 30,
+    },
+    businessId: {
+      type: Sequelize.INTEGER,
+      references: {
+        model: "businesses",
+        key: "id",
+      },
     },
   },
   { sequelize: sequelize, modelName: "branches", timestamps: false }
