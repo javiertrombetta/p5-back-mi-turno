@@ -18,12 +18,12 @@ Business.init(
       type: Sequelize.STRING,
     },
     phoneNumber: {
-      type: Sequelize.INTEGER,
+      type: Sequelize.BIGINT,
     },
     address: {
       type: Sequelize.STRING,
       allowNull: false,
-    }
+    },
   },
   { sequelize: sequelize, modelName: "businesses" }
 );
