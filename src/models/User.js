@@ -58,7 +58,7 @@ User.init({
       key: 'id'
     },
     allowNull: true
-  }
+  },
 }, 
 { sequelize: sequelize, modelName: "users" });
 

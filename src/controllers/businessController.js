@@ -1,8 +1,7 @@
-import Business from "../models/Business.js";
-import Branch from "../models/Branch.js";
-
+import models from "../models/index.js";
 import validate from '../utils/validations.js';
 
+const { Branch, Business }  = models;
 const businessController = {  
   createBusiness: async (req, res) => {
     const { name, email, phoneNumber, address } = req.body;  

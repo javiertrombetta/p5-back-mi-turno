@@ -1,15 +1,12 @@
 import Sequelize from "sequelize";
-import Reservation from "../models/Reservation.js";
-import User from "../models/User.js";
-import Branch from "../models/Branch.js";
-import Business from "../models/Business.js";
-
+import models from "../models/index.js";
 import { transporter } from "../config/mailTransporter.js";
 import validate from '../utils/validations.js';
 import formatData from '../utils/formatData.js';
 import emailService from '../utils/emailTemplates.js';
 import dashboard from '../utils/metrics.js';
 
+const { Branch, Business, User, Reservation }   = models;
 const reservationController = {
   createReservation: async (req, res) => {
     const { branchId, date, time, clientName, clientPhone, clientEmail } = req.body;
