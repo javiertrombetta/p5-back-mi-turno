@@ -42,6 +42,25 @@ const reservationStepper = {
         return acc;
       }, {});
     return schedules.filter(schedule => reservationCounts[schedule] >= criticalLimit);
-  }
+  },
+  filterSchedulesByDate: (schedules, schedule, specificDates, queryDate) => {
+    const queryDay = new Date(queryDate).getDay();
+    const dayMapping = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const disabledHours = schedule
+      .filter(daySchedule => daySchedule.day === dayMapping[queryDay])
+      .flatMap(daySchedule => daySchedule.disabledHours);
+    let filteredSchedules = schedules.filter(scheduleTime => 
+      !disabledHours.some(disabledTime => 
+        scheduleTime >= disabledTime.split('-')[0] && scheduleTime < disabledTime.split('-')[1]
+      )
+    );
+    const isDateDisabled = specificDates
+      .some(dateObj => dateObj.date === queryDate && dateObj.isDisabled);
+
+    if (isDateDisabled) {
+      filteredSchedules = [];
+    }
+    return filteredSchedules;
+  },
 };
 export default reservationStepper;

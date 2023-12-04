@@ -3,11 +3,11 @@ import User from './User.js';
 import Reservation from './Reservation.js';
 import Branch from './Branch.js';
 
-Branch.hasMany(Reservation, { foreignKey: 'branchId' });
-Reservation.belongsTo(Branch, { foreignKey: 'branchId' });
+Branch.hasMany(Reservation, { foreignKey: 'branchId', onDelete: 'SET NULL' });
+Reservation.belongsTo(Branch, { foreignKey: 'branchId', allowNull: true });
 
-Branch.hasMany(User, { foreignKey: 'branchId' });
-User.belongsTo(Branch, { foreignKey: 'branchId' });
+Branch.hasMany(User, { foreignKey: 'branchId', onDelete: 'SET NULL' });
+User.belongsTo(Branch, { foreignKey: 'branchId', allowNull: true });
 
 User.hasMany(Reservation, { foreignKey: 'userId' });
 Reservation.belongsTo(User, { foreignKey: 'userId' });

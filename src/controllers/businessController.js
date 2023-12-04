@@ -46,8 +46,11 @@ const businessController = {
   updateBusiness: async (req, res) => {
     const { id } = req.params;
     const { name, email, phoneNumber, address } = req.body;
+    if (!id) {
+      return res.status(400).json({ message: "Id de empresa no proporcionado." });
+    }
     if (!validate.id(id)) {
-      return res.status(400).json({ message: "ID de sucursal inválida." });
+      return res.status(400).json({ message: "Id de empresa inválido." });
     }
     if (name && !validate.name(name)) {
       return res.status(400).json({ message: "El nombre contiene caracteres inválidos." });
@@ -80,7 +83,13 @@ const businessController = {
     }
   },
   deleteBusiness: async (req, res) => {
-    const { id } = req.params;  
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ message: "Id de empresa no proporcionado." });
+    }
+    if (!validate.id(id)) {
+      return res.status(400).json({ message: "Id de empresa inválido." });
+    }  
     try {
       const business = await Business.findByPk(id);
       if (!business) {
@@ -116,6 +125,12 @@ const businessController = {
   },
   getBusinessById: async (req, res) => {
     const businessId = req.params.id;
+    if (!businessId) {
+      return res.status(400).json({ message: "Id de empresa no proporcionado." });
+    }
+    if (!validate.id(businessId)) {
+      return res.status(400).json({ message: "Id de empresa inválido." });
+    }
     try {
       if (req.user.rol === 'super') {
         const business = await Business.findByPk(businessId);
