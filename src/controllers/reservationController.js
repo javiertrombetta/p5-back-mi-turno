@@ -123,7 +123,7 @@ const reservationController = {
   },
   getBranchReservations: async (req, res) => {
     try {
-      if (req.user.rol !== 'oper' || !req.user.BranchId) {
+      if (req.user.role !== 'oper' || !req.user.BranchId) {
         return res.status(403).json({ message: 'Acceso restringido' });
       }
       const branchReservations = await Reservation.findAll({
@@ -174,13 +174,13 @@ const reservationController = {
       if (!reservation) {
         return res.status(404).json({ message: 'Reserva no encontrada.' });
       } 
-      if (req.user.rol === 'user') {
+      if (req.user.role === 'user') {
         return res.status(403).json({ message: 'Acceso denegado.' });
       }
-      if (req.user.rol === 'oper' && reservation.branchId !== req.user.BranchId) {
+      if (req.user.role === 'oper' && reservation.branchId !== req.user.BranchId) {
         return res.status(403).json({ message: 'Acceso denegado.' });
       }
-      if (req.user.rol === 'admin') {
+      if (req.user.role === 'admin') {
         const isAdminBranch = req.user.Business.Branches.some(branch => branch.id === reservation.BranchId);
         if (!isAdminBranch) {
           return res.status(403).json({ message: 'Acceso denegado.' });
