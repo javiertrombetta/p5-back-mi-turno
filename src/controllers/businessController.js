@@ -95,6 +95,10 @@ const businessController = {
       if (!business) {
         return res.status(404).json({ message: "Empresa no encontrada." });
       }
+      const branches = await Branch.count({ where: {id} });
+      if (branches > 0) {
+        return res.status(400).json({ message: "No se puede eliminar la empresa porque tiene sucursales asociadas." });
+      }
       await business.destroy();
       res.json({ message: "Empresa eliminada con éxito." });
     }
@@ -105,10 +109,10 @@ const businessController = {
   },
   getAllBusinesses: async (req, res) => {
     try {
-      if (req.user.rol === 'super') {
+      if (req.user.role === 'super') {
         const allBusinesses = await Business.findAll();
         return res.json(allBusinesses);
-      } else if (req.user.rol === 'admin') {
+      } else if (req.user.role === 'admin') {
         const userBusinessId = req.user.businessId;
         if (!userBusinessId) {
           return res.status(404).json({ message: "Información de empresa no disponible para el usuario." });
@@ -132,13 +136,13 @@ const businessController = {
       return res.status(400).json({ message: "Id de empresa inválido." });
     }
     try {
-      if (req.user.rol === 'super') {
+      if (req.user.role === 'super') {
         const business = await Business.findByPk(businessId);
         if (!business) {
           return res.status(404).json({ message: "Empresa no encontrada." });
         }
         return res.json(business);
-      } else if (req.user.rol === 'admin') {
+      } else if (req.user.role === 'admin') {
         const userBranches = await Branch.findAll({
           where: { adminId: req.user.dni }
         });
