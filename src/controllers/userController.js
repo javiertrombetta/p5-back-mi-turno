@@ -6,7 +6,7 @@ import { transporter } from "../config/mailTransporter.js";
 import validate from "../utils/validations.js";
 import emailTemplates from "../utils/emailTemplates.js";
 
-const { User, Branch, Business } = models;
+const { User, Branch, Business, Reservation } = models;
 const userController = {
   register: async (req, res) => {
     const { fullName, dni, email, phoneNumber, password } = req.body;
@@ -273,8 +273,9 @@ const userController = {
     }
   },
   updateUser: async (req, res) => {
-    const { fullName, phoneNumber, photo } = req.body;
-    let updatedFields = [];    
+    const { fullName, phoneNumber } = req.body;
+    let updatedFields = [];
+    const photo = req.file;    
     try {
       const user = await User.findByPk(req.user.dni);
       if (!user) {
@@ -314,7 +315,10 @@ const userController = {
   },
   getUserByDni: async (req, res) => {
     try {
-      const userDni = req.params.dni;   
+      const userDni = req.params.dni;
+      if (!userDni) {
+        return res.status(400).json({ message: "DNI no propocionado." });
+      }
       if (!validate.dni(userDni)) {
         return res.status(400).json({ message: "El DNI es inválido." });
       }
@@ -355,6 +359,35 @@ const userController = {
       res.status(500).json({ message: "Error al obtener usuarios." });
     }
   },
+  getAllOpersByBusiness: async (req, res) => {
+    try {
+      if (req.user.role !== 'admin') {
+        return res.status(403).json({ message: 'No autorizado. Solo los administradores pueden realizar esta acción.' });
+      } 
+      const userBusinessId = req.user.businessId;
+      const opers = await User.findAll({
+        where: {
+          role: 'oper',
+          businessId: userBusinessId
+        },
+        include: [
+          {
+            model: Business,
+            as: 'Business',
+            attributes: ['id', 'name']
+          }
+        ],
+        attributes: ['dni', 'fullName', 'email', 'phoneNumber', 'role', 'photo', 'lastLogin']
+      });  
+      if (opers.length === 0) {
+        return res.status(404).json({ message: 'No se encontraron operadores para esta empresa.' });
+      }  
+      res.status(200).json(opers);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Error al obtener los operadores.' });
+    }
+  },
   adminResetPassword: async (req, res) => {
     const { dni } = req.params;
     if (!validate.dni(dni)) {
@@ -386,7 +419,8 @@ const userController = {
       const user = await User.findByPk(dni);
       if (!user) {
         return res.status(404).json({ message: "Usuario no encontrado." });
-      }
+      }  
+      await Reservation.destroy({ where: { userId: dni } });
       const mailOptions = emailTemplates.accountDeletion(user);
       await transporter.sendMail(mailOptions);
       await user.destroy();
@@ -398,8 +432,9 @@ const userController = {
   },
   updateUserByDni: async (req, res) => {
     const { dni } = req.params;
-    const { fullName, email, phoneNumber, photo } = req.body;
-    let updatedFields = [];
+    const { fullName, email, phoneNumber, role } = req.body;
+    const photo = req.file;
+    let updatedFields = [];    
     if (!validate.dni(dni)) {
       return res.status(400).json({ message: "El DNI es inválido." });
     }    
@@ -412,6 +447,9 @@ const userController = {
     if (phoneNumber && !validate.phone(phoneNumber)) {
       return res.status(400).json({ message: "El número de teléfono tiene que ser numérico." });
     }
+    if (role && !validate.role(role)) {
+      return res.status(400).json({ message: "El rol ingresado es inválido." });
+    }
     if (photo && !validate.imageFormat(photo)) {
       return res.status(400).json({ message: "Formato de imagen inválido para la foto." });
     }
@@ -423,6 +461,7 @@ const userController = {
       if (fullName && fullName !== user.fullName) updatedFields.push('Nombre Completo');
       if (email && email !== user.email) updatedFields.push('Correo Electrónico');
       if (phoneNumber && phoneNumber !== user.phoneNumber) updatedFields.push('Número de Teléfono');
+      if (role && role !== user.role) updatedFields.push('Rol');
       if (photo && photo !== user.photo) updatedFields.push('Foto');
       const updatedData = { fullName, email, phoneNumber, photo };
       await user.update(updatedData);

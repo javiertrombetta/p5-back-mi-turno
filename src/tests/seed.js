@@ -16,6 +16,7 @@ const saltRounds = 10;
 const seedDatabase = async () => {
   await sequelize.sync({ force: true });
 
+  // Seed businesses
   const businesses = [];
   for (let i = 0; i < 10; i++) {
     const business = await Business.create({
@@ -27,6 +28,7 @@ const seedDatabase = async () => {
     businesses.push(business);
   }
 
+  // Seed branches
   const branches = [];
   for (let i = 0; i < 20; i++) {
     const businessId = businesses[faker.datatype.number({ min: 0, max: businesses.length - 1 })].id;
@@ -42,11 +44,15 @@ const seedDatabase = async () => {
       openingTime,
       closingTime,
       turnDuration: 30,
-      businessId
+      businessId,
+      isEnable: faker.datatype.boolean(),
+      schedule: generateRandomSchedule(),
+      specificDates: generateRandomSpecificDates()
     });
     branches.push(branch);
   }
 
+  // Seed users
   let userDNIs = [];
   for (let i = 0; i < 50; i++) {
     const dni = faker.datatype.number({ min: 10000000, max: 99999999 });
@@ -65,6 +71,7 @@ const seedDatabase = async () => {
     userDNIs.push(dni);
   }
 
+  // Seed reservations
   for (let i = 0; i < 100; i++) {
     const branch = branches[faker.datatype.number({ min: 0, max: branches.length - 1 })];
     const time = generateRandomTimeWithinRange(branch.openingTime, branch.closingTime);
@@ -136,6 +143,39 @@ const seedDatabase = async () => {
 
   console.log('Datos de prueba generados con éxito');
 };
+
+function generateRandomSchedule() {
+  const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+  const schedule = [];
+
+  const daysToDisable = faker.datatype.number({ min: 0, max: 3 });
+  for (let i = 0; i < daysToDisable; i++) {
+    const day = faker.helpers.arrayElement(daysOfWeek);
+    const disabledHours = [];
+
+    const timesToDisable = faker.datatype.number({ min: 1, max: 4 });
+    for (let j = 0; j < timesToDisable; j++) {
+      const hour = faker.datatype.number({ min: 8, max: 17 });
+      disabledHours.push(`${hour.toString().padStart(2, '0')}:00`);
+    }
+
+    schedule.push({ day, disabledHours });
+  }
+
+  return schedule;
+}
+
+function generateRandomSpecificDates() {
+  const specificDates = [];
+  const datesToDisable = faker.datatype.number({ min: 0, max: 3 });
+  for (let i = 0; i < datesToDisable; i++) {
+    const date = faker.date.future(1).toISOString().split('T')[0]; 
+    const isDisabled = faker.datatype.boolean();
+    specificDates.push({ date, isDisabled });
+  }
+
+  return specificDates;
+}
 
 function generateRandomTimeWithinRange(openingTime, closingTime) {
   const startTime = convertTimeToMinutes(openingTime);

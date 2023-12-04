@@ -11,6 +11,8 @@ router.put('/:id', auth, checkSuperRole, branchesController.updateBranch);
 router.delete('/:id', auth, checkSuperRole, branchesController.deleteBranch);
 // Admin
 router.get('/business/:businessId', auth, checkAdminRole, branchesController.getBranchesByBusiness);
+router.put('/:id/schedule', auth, checkAdminRole, branchesController.updateSchedule);
+router.put('/:id/enable-status', auth, checkAdminRole, branchesController.updateBranchEnableStatus);
 // Operator
 router.get('/assigned', auth, checkOperatorRole, branchesController.getAssignedBranches);
 // All users
