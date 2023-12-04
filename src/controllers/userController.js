@@ -102,7 +102,9 @@ const userController = {
         fullName: user.fullName,
         role: user.role,
         phoneNumber: user.phoneNumber,
-        photo: user.photo,
+        photo: user.photo,        
+        businessId: user.businessId,
+        branchId: user.businessId,
         lastLogin: user.lastLogin,
       };
       const token = generateToken(payload);
@@ -135,6 +137,8 @@ const userController = {
           "role",
           "phoneNumber",
           "photo",
+          "businessId",
+          "branchId",
           "lastLogin",
         ],
       });
@@ -333,6 +337,8 @@ const userController = {
         phoneNumber: user.phoneNumber,
         photo: user.photo,
         role: user.role,
+        businessId: user.businessId,
+        branchId: user.businessId,
         lastLogin: user.lastLogin,
       });
     } catch (error) {
@@ -350,6 +356,8 @@ const userController = {
           "phoneNumber",
           "role",
           "photo",
+          "businessId",
+          "branchId",
           "lastLogin",
         ],
       });
@@ -513,6 +521,44 @@ const userController = {
     } catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });
+    }
+  },
+  assignBusinessAndBranches: async (req, res) => {
+    const { dni, businessId, branchIds } = req.body;
+    if (!dni) {
+      return res.status(400).json({ message: "DNI no proporcionado." });
+    }
+    if (!validate.dni(dni)) {
+        return res.status(400).json({ message: "DNI inválido." });
+    }
+    if (!businessId) {
+        return res.status(400).json({ message: "ID de empresa no proporcionado." });
+    }
+    if (!validate.id(businessId)) {
+        return res.status(400).json({ message: "ID de empresa inválido." });
+    }
+    if (!branchIds || branchIds == undefined || branchIds == []) {
+      return res.status(400).json({ message: "No se enviaron las sucursales solicitadas." });
+    }
+    if (!validate.branchIds(branchIds)) {
+      return res.status(400).json({ message: "IDs de sucursales inválidos." });
+    }
+    try {
+        const user = await User.findByPk(dni);
+        if (!user) {
+            return res.status(404).json({ message: "Usuario no encontrado." });
+        }
+        user.businessId = businessId;
+        if (user.role === 'oper' && branchIds && Array.isArray(branchIds)) {
+            await user.setBranches(branchIds);
+        } else {
+            await user.setBranches([]);
+        }
+        await user.save();
+        res.json({ message: "Empresa y sucursales asignadas correctamente." });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: error.message });
     }
   },
   assignRoleToUser: async (req, res) => {

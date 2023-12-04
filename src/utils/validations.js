@@ -56,6 +56,8 @@ const validate = {
     if (dateStr.match(regex) === null) return false;  
     const date = new Date(dateStr);
     return date.toISOString().slice(0, 10) === dateStr;
-  }
+  },
+  branchIds: branchIds => 
+    Array.isArray(branchIds) && branchIds.every(id => regexPatterns.id.test(id)),
 };
 export default validate;

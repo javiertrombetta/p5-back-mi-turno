@@ -10,9 +10,9 @@ router.post('/', auth, checkSuperRole, branchesController.createBranch);
 router.put('/:id', auth, checkSuperRole, branchesController.updateBranch);
 router.delete('/:id', auth, checkSuperRole, branchesController.deleteBranch);
 // Admin
-router.get('/business/:businessId', auth, checkAdminRole, branchesController.getBranchesByBusiness);
+router.get('/:businessId/business', auth, checkAdminRole, branchesController.getBranchesByBusiness);
 router.put('/:id/schedule', auth, checkAdminRole, branchesController.updateSchedule);
-router.put('/:id/enable-status', auth, checkAdminRole, branchesController.updateBranchEnableStatus);
+router.put('/:id/status', auth, checkAdminRole, branchesController.updateBranchEnableStatus); //OK
 // Operator
 router.get('/assigned', auth, checkOperatorRole, branchesController.getAssignedBranches);
 // All users
