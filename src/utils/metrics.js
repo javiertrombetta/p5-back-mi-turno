@@ -18,7 +18,7 @@ const metrics = {
       limit: 1
     });
   },
-  getAverageCancellations: async (branchIds, totalBranches) => {
+  getAverageCancellations: async (branchIds) => {
     const cancellationCounts = await Reservation.findAll({
       attributes: [
         'branchId',
@@ -29,12 +29,13 @@ const metrics = {
         state: 'cancelado'
       },
       group: ['branchId']
-    });
-
-    return cancellationCounts.reduce((acc, cancelCount) => {
-      acc[cancelCount.branchId] = cancelCount.cancelCount / totalBranches;
-      return acc;
-    }, {});
+    });  
+    const averageCancellations = {};
+    branchIds.forEach(branchId => {
+      const branchCancellation = cancellationCounts.find(c => c.branchId === branchId);
+      averageCancellations[branchId] = branchCancellation ? branchCancellation.cancelCount / totalBranches : 0;
+    });  
+    return averageCancellations;
   },
   getMostVisitedBranches: async (branchIds) => {
     return await Reservation.findAll({
@@ -55,14 +56,42 @@ const metrics = {
     const operatorCounts = await User.count({
       where: {
         role: 'oper',
-        BranchId: branchIds
+        branchId: branchIds
       },
-      group: ['BranchId']
+      group: ['branchId']
+    });  
+    const operatorCountResult = {};
+    branchIds.forEach(branchId => {
+      const branchOperatorCount = operatorCounts.find(count => count.branchId === branchId);
+      operatorCountResult[branchId] = branchOperatorCount ? branchOperatorCount.count : 0;
+    });  
+    return operatorCountResult;
+  },
+  getTotalReservationsByBranch: async (branchIds) => {
+    return await Reservation.count({
+      where: {
+        branchId: branchIds
+      },
+      group: ['branchId']
     });
-    return operatorCounts.reduce((acc, count) => {
-      acc[count.BranchId] = count.count;
-      return acc;
-    }, {});
+  },
+  getTotalCancellationsByBranch: async (branchIds) => {
+    return await Reservation.count({
+      where: {
+        branchId: branchIds,
+        state: 'cancelado'
+      },
+      group: ['branchId']
+    });
+  },
+  getTotalAttendancesByBranch: async (branchIds) => {
+    return await Reservation.count({
+      where: {
+        branchId: branchIds,
+        state: 'finalizado'
+      },
+      group: ['branchId']
+    });
   }
 };
 export default metrics;

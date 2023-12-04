@@ -30,5 +30,7 @@ router.put("/:dni", auth, checkSuperRole, upload.single('photo'), userController
 router.get("/:dni", auth, checkSuperRole, userController.getUserByDni);
 router.get("/", auth, checkSuperRole, userController.getAllUsers);
 router.delete("/:dni", auth, checkSuperRole, userController.deleteUserByDni);
+//Oper
+router.post('/users/assign', userController.assignBusinessAndBranches);
 
 export default router;

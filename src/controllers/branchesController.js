@@ -93,28 +93,28 @@ const branchesController = {
     if (!validate.id(branchId)) {
       return res.status(400).json({ message: "Id de sucursal inválido." });
     }
-    if (name && !validate.fantasyName(name)) {
+    if (!validate.fantasyName(name)) {
       return res.status(400).json({ message: "Nombre inválido." });
     }
-    if (email && !validate.email(email)) {
+    if (!validate.email(email)) {
       return res.status(400).json({ message: "Formato de correo electrónico inválido." });
     }
-    if (phoneNumber && !validate.phone(phoneNumber)) {
+    if (!validate.phone(phoneNumber)) {
       return res.status(400).json({ message: "Formato de número de teléfono inválido." });
     }
-    if (address && !validate.address(address)) {
+    if (!validate.address(address)) {
       return res.status(400).json({ message: "Dirección inválida." });
     }
-    if (capacity && !validate.capacity(capacity)) {
+    if (!validate.capacity(capacity)) {
       return res.status(400).json({ message: "Capacidad inválida." });
     }
-    if (openingTime && !validate.time(openingTime)) {
+    if (!validate.time(openingTime)) {
       return res.status(400).json({ message: "Horario de apertura inválido." });
     }
-    if (closingTime && !validate.time(closingTime)) {
+    if (!validate.time(closingTime)) {
       return res.status(400).json({ message: "Horario de cierre inválido." });
     }
-    if (turnDuration && !validate.turnDuration(turnDuration)) {
+    if (!validate.turnDuration(turnDuration)) {
       return res.status(400).json({ message: "Duración de turno inválida." });
     }
     if (isEnable !== undefined && !validate.isEnable(isEnable)) {
@@ -452,10 +452,7 @@ const branchesController = {
     }
     if (!validate.id(branchId)) {
       return res.status(400).json({ message: "Id de sucursal inválido." });
-    }
-    if (!isEnable) {
-      return res.status(400).json({ message: "Id de sucursal no proporcionado." });
-    }
+    }    
     if (!validate.isEnable(isEnable)) {
       return res.status(400).json({ message: "Id de sucursal inválido." });
     } 
