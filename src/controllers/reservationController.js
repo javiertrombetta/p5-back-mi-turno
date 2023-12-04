@@ -216,24 +216,31 @@ const reservationController = {
     }
   },  
   getReservationMetrics: async (req, res) => {
-    const adminBusinessId = req.user.BusinessId;
-    if (!adminBusinessId) {
-      return res.status(400).json({ message: 'Información de empresa no disponible.' });
-    }
-    if (!validate.id(adminBusinessId)) {
-      return res.status(400).json({ message: 'Información de empresa inválida.' });
-    }
+    const userRole = req.user.role;
+    let branchIds;
     try {
-      const branches = await Branch.findAll({
-        where: { businessId: adminBusinessId },
-        attributes: ['id', 'name']
-      });
-      const branchIds = branches.map(branch => branch.id);
+      if (userRole === 'super') {
+        const allBranches = await Branch.findAll({ attributes: ['id'] });
+        branchIds = allBranches.map(branch => branch.id);
+      } else {
+        const adminBusinessId = req.user.businessId;
+        if (!adminBusinessId || !validate.id(adminBusinessId)) {
+          return res.status(400).json({ message: 'Información de empresa inválida.' });
+        }
+        const branches = await Branch.findAll({
+          where: { businessId: adminBusinessId },
+          attributes: ['id']
+        });
+        branchIds = branches.map(branch => branch.id);
+      }
       const metrics = {
         peakTimes: await dashboard.getPeakTimes(branchIds),
-        averageCancellations: await dashboard.getAverageCancellations(branchIds, branches.length),
+        averageCancellations: await dashboard.getAverageCancellations(branchIds),
         mostVisitedBranches: await dashboard.getMostVisitedBranches(branchIds),
-        operatorCount: await dashboard.getOperatorCount(branchIds)
+        operatorCount: await dashboard.getOperatorCount(branchIds),
+        totalReservations: await dashboard.getTotalReservationsByBranch(branchIds),
+        totalCancellations: await dashboard.getTotalCancellationsByBranch(branchIds),
+        totalAttendances: await dashboard.getTotalAttendancesByBranch(branchIds)
       };
       res.json({ metrics });
     } catch (error) {

@@ -15,7 +15,7 @@ router.put('/:id/cancel', auth, reservationController.cancelReservationById); //
 router.put('/:id/status', auth, checkOperatorRole, reservationController.updateReservationStatus);
 router.get('/branch', auth, checkOperatorRole, reservationController.getBranchReservations);
 //Admin
-router.get('/metrics', auth, checkAdminRole, reservationController.getReservationMetrics);
+router.get('/metrics', auth, checkAdminRole, reservationController.getReservationMetrics); //OK
 //Super
 router.put('/:id', auth, checkSuperRole, reservationController.modifyReservation);
 router.get('/', auth, checkSuperRole, reservationController.getAllReservations);
