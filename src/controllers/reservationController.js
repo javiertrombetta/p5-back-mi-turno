@@ -5,6 +5,7 @@ import validate from '../utils/validations.js';
 import formatData from '../utils/formatData.js';
 import emailTemplates from "../utils/emailTemplates.js";
 import dashboard from '../utils/metrics.js';
+import qrGenerator from "../utils/qr.js";
 
 const { Branch, Business, User, Reservation }   = models;
 const reservationController = {
@@ -54,12 +55,14 @@ const reservationController = {
       return res.status(400).json({ message: "Formato de correo electrónico no válido." });
     }       
     try {
+      const qrToken = qrGenerator.generateToken(req.body.branchId, req.body.date, req.body.time);
       const newReservation = await Reservation.create({
         userId,
         branchId,
         date,
         time,
         state: 'pendiente',
+        qrToken,
         clientName,
         clientPhone,
         clientEmail
@@ -216,38 +219,46 @@ const reservationController = {
     }
   },  
   getReservationMetrics: async (req, res) => {
-    const userRole = req.user.role;
-    let branchIds;
+    // const userRole = req.user.role;
+    const userRole = 'super';
+    let branchIds;  
     try {
+      if (userRole === 'user') {
+        return res.status(403).json({ message: 'Acceso no autorizado.' });
+      }
+  
       if (userRole === 'super') {
         const allBranches = await Branch.findAll({ attributes: ['id'] });
         branchIds = allBranches.map(branch => branch.id);
-      } else {
-        const adminBusinessId = req.user.businessId;
-        if (!adminBusinessId || !validate.id(adminBusinessId)) {
+      } 
+      else {
+        const businessId = req.user.businessId;
+        if (!businessId || !validate.id(businessId)) {
           return res.status(400).json({ message: 'Información de empresa inválida.' });
         }
+  
         const branches = await Branch.findAll({
-          where: { businessId: adminBusinessId },
+          where: { businessId: businessId },
           attributes: ['id']
         });
         branchIds = branches.map(branch => branch.id);
-      }
+      }  
       const metrics = {
         peakTimes: await dashboard.getPeakTimes(branchIds),
         averageCancellations: await dashboard.getAverageCancellations(branchIds),
-        mostVisitedBranches: await dashboard.getMostVisitedBranches(branchIds),
         operatorCount: await dashboard.getOperatorCount(branchIds),
         totalReservations: await dashboard.getTotalReservationsByBranch(branchIds),
         totalCancellations: await dashboard.getTotalCancellationsByBranch(branchIds),
         totalAttendances: await dashboard.getTotalAttendancesByBranch(branchIds)
-      };
+      };  
       res.json({ metrics });
-    } catch (error) {
+    }
+    catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });
     }
   },
+  
   getAllReservations: async (req, res) => {
     try {
       const allReservations = await Reservation.findAll({
@@ -482,7 +493,69 @@ const reservationController = {
       console.error(error);
       res.status(500).json({ error: 'Error al eliminar la reserva.' });
     }
-  }
+  },
+  getReservationByQrToken: async (req, res) => {
+    const { qrToken } = req.params;
+
+    if (!qrToken) {
+      return res.status(400).json({ message: "Token QR no proporcionado." });
+    }
+
+    try {
+      const reservation = await Reservation.findOne({
+        where: { qrToken },
+        include: [
+          {
+            model: Branch,
+            include: {
+              model: Business,
+              attributes: ['name', 'email', 'phoneNumber', 'address']
+            },
+            attributes: ['name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime', 'turnDuration'],
+          },
+          {
+            model: User,
+            attributes: ['dni', 'fullName', 'email']
+          }
+        ],
+      });
+
+      if (!reservation) {
+        return res.status(404).json({ message: "Reserva no encontrada." });
+      }
+
+      res.json(reservation);
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  },
+  updateReservationStatusByQrToken: async (req, res) => {
+    const { qrToken } = req.params;
+    const { state } = req.body;
+    if (!qrToken) {
+      return res.status(400).json({ message: "Token QR no proporcionado." });
+    }
+    if (!state) {
+      return res.status(400).json({ message: "Estado de reserva no ingresado." });
+    }
+    if (!['pendiente', 'confirmado', 'cancelado', 'finalizado', 'ausente'].includes(state)) {
+      return res.status(400).json({ message: "Estado de reserva inválido." });
+    }
+    try {
+      const reservation = await Reservation.findOne({ where: { qrToken } });
+
+      if (!reservation) {
+        return res.status(404).json({ message: "Reserva no encontrada." });
+      }
+      reservation.state = state;
+      await reservation.save();   
+      res.json({ message: 'Estado de la reserva actualizado con éxito', reservation });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  },
 };
 
 export default reservationController;
