@@ -6,7 +6,7 @@ import { checkAdminRole, checkSuperRole, checkOperatorRole } from '../middleware
 const router = express.Router();
 
 // Super
-router.post('/', auth, checkSuperRole, branchesController.createBranch);
+router.post('/', auth, checkSuperRole, branchesController.createBranch); //OK
 router.put('/:id', auth, checkSuperRole, branchesController.updateBranch);
 router.delete('/:id', auth, checkSuperRole, branchesController.deleteBranch);
 // Admin

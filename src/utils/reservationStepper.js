@@ -20,18 +20,19 @@ const reservationStepper = {
     }
     return schedules;
   },
-  filterAvailableSchedules: (schedules, reservations, queryDate) => {
+  filterAvailableSchedules: (schedules, reservations, branchCapacity, queryDate) => {
     const queryDateFormatted = new Date(queryDate).toISOString().split('T')[0];
-  
+    
     const reservedTimes = reservations
-      .filter(reservation => {
-        const reservationDate = new Date(reservation.date);
-        return reservationDate.toISOString().split('T')[0] === queryDateFormatted;
-      })
-      .map(reservation => formatTime(reservation.time));
+      .filter(reservation => new Date(reservation.date).toISOString().split('T')[0] === queryDateFormatted)
+      .reduce((acc, reservation) => {
+        acc[reservation.time] = (acc[reservation.time] || 0) + 1;
+        return acc;
+      }, {});
   
     return schedules.filter(schedule => {
-      return !reservedTimes.includes(schedule);
+      const reservationCount = reservedTimes[schedule] || 0;
+      return reservationCount < branchCapacity;
     });
   },
   identifyCriticalSchedules: (schedules, reservations, date, criticalLimit = 2) => {
