@@ -336,7 +336,7 @@ const branchesController = {
   getAvailableBranchSchedules: async (req, res) => {
     const branchId = req.params.id;
     const queryDate = req.query.date;
-    const currentDate = new Date();
+
     if (!branchId) {
       return res.status(400).json({ message: "Id de sucursal no proporcionado." });
     }
@@ -344,42 +344,33 @@ const branchesController = {
       return res.status(400).json({ message: "Id de sucursal inválido." });
     }
     if (!queryDate) {
-      return res.status(400).json({ message: "No hay una fecha válida pasada como params." });
+      return res.status(400).json({ message: "Fecha de consulta no proporcionada." });
     }
     if (!validate.isValidDate(queryDate)) {
-      return res.status(400).json({ message: "No pasaste una fecha válida en params." });
+      return res.status(400).json({ message: "Fecha de consulta inválida." });
     }
     try {
       const branch = await Branch.findByPk(branchId, {
-        attributes: ['openingTime', 'closingTime', 'turnDuration', 'isEnable', 'schedule', 'specificDates']
+        attributes: ['openingTime', 'closingTime', 'turnDuration', 'capacity', 'isEnable', 'schedule', 'specificDates']
       });
-  
+
       if (!branch) {
         return res.status(404).json({ message: 'Sucursal no encontrada.' });
       }
+
       if (!branch.isEnable) {
         return res.status(403).json({ message: 'La sucursal no está habilitada.' });
-      }
-      const queryStartDate = new Date(queryDate);
-      queryStartDate.setHours(0, 0, 0, 0);
-      const queryEndDate = new Date(queryDate);
-      queryEndDate.setHours(23, 59, 59, 999);  
+      }     
+      const allSchedules = reservationStepper.generateSchedules(branch.openingTime, branch.closingTime, branch.turnDuration);
+      let availableSchedules = reservationStepper.filterSchedulesByDate(allSchedules, branch.schedule, branch.specificDates, queryDate);
       const reservations = await Reservation.findAll({
         where: {
           branchId,
-          date: {
-            [Op.between]: [queryStartDate, queryEndDate]
-          }
+          date: queryDate
         }
-      });  
-      const allSchedules = reservationStepper.generateSchedules(branch.openingTime, branch.closingTime, branch.turnDuration);
-      let availableSchedules = reservationStepper.filterSchedulesByDate(allSchedules, branch.schedule, branch.specificDates, queryDate);
-      availableSchedules = reservationStepper.filterAvailableSchedules(availableSchedules, reservations, queryDate);
+      });
+      availableSchedules = reservationStepper.filterAvailableSchedules(availableSchedules, reservations, branch.capacity, queryDate);
 
-      if (queryStartDate.toDateString() === currentDate.toDateString()) {
-        const currentTime = currentDate.getHours() + ":" + currentDate.getMinutes().toString().padStart(2, '0');
-        availableSchedules = availableSchedules.filter(time => time >= currentTime);
-      }  
       res.json({ availableSchedules });
     } catch (error) {
       console.error(error);
