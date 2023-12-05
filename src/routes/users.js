@@ -14,6 +14,7 @@ router.post("/login", userController.login);
 router.post("/forgot-password", userController.mailForgotPassword);
 router.post("/reset-password", userController.mailResetPassword);
 //All users
+router.post("/send-message", auth, userController.sendMessage);
 router.post("/logout", auth, userController.logout);
 router.put("/me/change-password", auth, userController.changeUserPassword);
 router.put("/me", auth, upload.single('photo'), userController.updateUser);
