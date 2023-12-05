@@ -51,11 +51,17 @@ const branchesController = {
     if (!validate.time(closingTime)) {
       return res.status(400).json({ message: "Horario de cierre inválido." });
     }
-    if (turnDuration && !validate.turnDuration(turnDuration)) {
-      return res.status(400).json({ message: "Duración de turno inválida." });
+    if (!turnDuration) {
+      return res.status(400).json({ message: "Se requiere completar la duración de turno." });
     }
-    if (isEnable !== undefined && !validate.isEnable(isEnable)) {
-      return res.status(400).json({ message: "El valor de isEnable es inválido. Debe ser booleano." });
+    if (!validate.turnDuration(turnDuration)) {
+      return res.status(400).json({ message: "Duración de turno inválida. Tiene que ser mayor a 5 minutos y menor a ." });
+    }
+    if (isEnable == undefined) {
+      return res.status(400).json({ message: "Debe haber un valor (Si o No) en ¿Sucursal habilitada?." });
+    }
+    if (!validate.isEnable(isEnable)) {
+      return res.status(400).json({ message: "El valor de en ¿Sucursal habilitada? es inválido. Debe ser booleano." });
     }
     if (schedule && !validate.schedule(schedule)) {
       return res.status(400).json({ message: "Formato de horario inválido. Verifique el formato de los días y horas deshabilitadas." });
