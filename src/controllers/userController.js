@@ -626,6 +626,23 @@ const userController = {
       res.status(500).json({ error: error.message });
     }
   },
+  sendMessage: async (req, res) => {
+    const { message } = req.body;
+    const user = req.user;
+    const adminEmail = "miturnowebapp@gmail.com"; 
+    try {
+      const userMailOptions = emailTemplates.userQueryConfirmation(user, message);
+      await transporter.sendMail(userMailOptions);
+
+      const adminMailOptions = emailTemplates.adminNotificationOfUserQuery(adminEmail, user, message);
+      await transporter.sendMail(adminMailOptions);
+
+      res.json({ message: "Mensaje enviado con éxito." });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: "Error al enviar el mensaje." });
+    }
+  }
 };
 
 export default userController;
