@@ -38,7 +38,7 @@ const validate = {
   imageFormat: photo => regexPatterns.imageFormat.test(photo),
   password: password => regexPatterns.password.test(password),
   createResetUrl: resetToken => `${process.env.MAIL_RESET_PASSWORD_URL}/reset-password/${resetToken}`,
-  turnDuration: duration => Number.isInteger(duration) && duration >= 15 && duration <= 120,
+  turnDuration: duration => Number.isInteger(duration) && duration >= 5 && duration <= 120,
   role: role => validRoles.includes(role),
   isEnable: isEnable => typeof isEnable === 'boolean',
   schedule: schedule => Array.isArray(schedule) && schedule.every(day => 
