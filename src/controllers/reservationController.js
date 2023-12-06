@@ -243,7 +243,6 @@ const reservationController = {
       const metrics = {
         peakTimes: await dashboard.getPeakTimes(branchIds),
         averageCancellations: await dashboard.getAverageCancellations(branchIds),
-        operatorCount: await dashboard.getOperatorCount(branchIds),
         totalReservations: await dashboard.getTotalReservationsByBranch(branchIds),
         totalCancellations: await dashboard.getTotalCancellationsByBranch(branchIds),
         totalAttendances: await dashboard.getTotalAttendancesByBranch(branchIds),
@@ -258,29 +257,38 @@ const reservationController = {
       console.error(error);
       res.status(500).json({ error: error.message });
     }
-  },  
+  },
   getReservationMetricsById: async (req, res) => {
     const branchId = parseInt(req.params.id, 10);
+    const { date } = req.query;
     try {
       if (isNaN(branchId)) {
         return res.status(400).json({ message: "ID de sucursal inválido." });
-      }  
+      }
+      let whereClause = {};
+      if (date) {
+        const startDate = new Date(date);
+        const endDate = new Date(date);
+        endDate.setDate(endDate.getDate() + 1);  
+        whereClause.date = {
+          [Sequelize.Op.gte]: startDate,
+          [Sequelize.Op.lt]: endDate
+        };
+      }
       const metrics = {
-        peakTimes: await dashboard.getPeakTimes([branchId]),
-        averageCancellations: await dashboard.getAverageCancellations([branchId]),
-        operatorCount: await dashboard.getOperatorCount([branchId]),
-        totalReservations: await dashboard.getTotalReservationsByBranch([branchId]),
-        totalCancellations: await dashboard.getTotalCancellationsByBranch([branchId]),
-        totalAttendances: await dashboard.getTotalAttendancesByBranch([branchId]),
-        totalPending: await dashboard.getTotalPendingByBranch([branchId]),
-        totalConfirmed: await dashboard.getTotalConfirmedByBranch([branchId]),
-        totalFinished: await dashboard.getTotalFinishedByBranch([branchId]),
-        totalNoShow: await dashboard.getTotalNoShowByBranch([branchId])
+        peakTimes: await dashboard.getPeakTimes([branchId], whereClause),
+        averageCancellations: await dashboard.getAverageCancellations([branchId], whereClause),
+        totalReservations: await dashboard.getTotalReservationsByBranch([branchId], whereClause),
+        totalCancellations: await dashboard.getTotalCancellationsByBranch([branchId], whereClause),
+        totalAttendances: await dashboard.getTotalAttendancesByBranch([branchId], whereClause),
+        totalPending: await dashboard.getTotalPendingByBranch([branchId], whereClause),
+        totalConfirmed: await dashboard.getTotalConfirmedByBranch([branchId], whereClause),
+        totalFinished: await dashboard.getTotalFinishedByBranch([branchId], whereClause),
+        totalNoShow: await dashboard.getTotalNoShowByBranch([branchId], whereClause)
       };
   
       res.json({ metrics });
-    } 
-    catch (error) {
+    } catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });
     }
