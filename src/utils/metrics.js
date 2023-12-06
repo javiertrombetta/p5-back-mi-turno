@@ -118,6 +118,66 @@ const metrics = {
     });
     return totalAttendances;
   },
+  getTotalPendingByBranch: async (branchIds) => {
+    const totalPendingCounts = await Reservation.count({
+      where: {
+        branchId: branchIds,
+        state: 'pendiente'
+      },
+      group: ['branchId']
+    });
+  
+    const totalPending = {};
+    branchIds.forEach(branchId => {
+      totalPending[branchId] = totalPendingCounts.find(tp => tp.branchId === branchId)?.count || 0;
+    });
+    return totalPending;
+  },
+  getTotalConfirmedByBranch: async (branchIds) => {
+    const totalConfirmedCounts = await Reservation.count({
+      where: {
+        branchId: branchIds,
+        state: 'confirmado'
+      },
+      group: ['branchId']
+    });
+  
+    const totalConfirmed = {};
+    branchIds.forEach(branchId => {
+      totalConfirmed[branchId] = totalConfirmedCounts.find(tc => tc.branchId === branchId)?.count || 0;
+    });
+    return totalConfirmed;
+  }, 
+  getTotalFinishedByBranch: async (branchIds) => {
+    const totalFinishedCounts = await Reservation.count({
+      where: {
+        branchId: branchIds,
+        state: 'finalizado'
+      },
+      group: ['branchId']
+    });
+  
+    const totalFinished = {};
+    branchIds.forEach(branchId => {
+      totalFinished[branchId] = totalFinishedCounts.find(tf => tf.branchId === branchId)?.count || 0;
+    });
+    return totalFinished;
+  },
+  getTotalNoShowByBranch: async (branchIds) => {
+    const totalNoShowCounts = await Reservation.count({
+      where: {
+        branchId: branchIds,
+        state: 'ausente'
+      },
+      group: ['branchId']
+    });
+  
+    const totalNoShow = {};
+    branchIds.forEach(branchId => {
+      totalNoShow[branchId] = totalNoShowCounts.find(tns => tns.branchId === branchId)?.count || 0;
+    });
+    return totalNoShow;
+  },
 };
 export default metrics;
 
