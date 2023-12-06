@@ -390,7 +390,7 @@ const userController = {
         photo: user.photo,
         role: user.role,
         businessId: user.businessId,
-        branchId: user.businessId,
+        branchId: user.branchId,
         lastLogin: user.lastLogin,
       });
     } catch (error) {
@@ -513,9 +513,10 @@ const userController = {
     const { fullName, email, phoneNumber, role, businessId, branchId } = req.body;
     const photo = req.file;
     let updatedFields = [];
-
-    businessId = businessId ? parseInt(businessId, 10) : null;
-    branchId = branchId ? parseInt(branchId, 10) : null;
+    console.log(businessId)
+    console.log(branchId)
+   // const businessIdParsed = businessId ? parseInt(businessId, 10) : null;
+   // const branchIdParsed = branchId ? parseInt(branchId, 10) : null;
 
     if (!dni) {
       return res.status(400).json({ message: "DNI no proporcionado." });
@@ -544,6 +545,12 @@ const userController = {
     if (!role) {
       return res.status(400).json({ message: "Rol inválido" });
     }
+    /*if (businessId && isNaN(businessIdParsed)) {
+      return res.status(400).json({ message: "El ID de la empresa debe ser un número." });
+    }    
+    if (branchId && isNaN(branchIdParsed)) {
+      return res.status(400).json({ message: "El ID de la sucursal debe ser un número." });
+    }*/
     if (!validate.role(role)) {
       return res.status(400).json({ message: "El rol ingresado es inválido." });
     }    
@@ -560,16 +567,16 @@ const userController = {
       if (phoneNumber && phoneNumber !== user.phoneNumber) updatedFields.push("Número de Teléfono");
       if (role && role !== user.role) updatedFields.push("Rol");
       if (photo && photo !== user.photo) updatedFields.push("Foto");
-      if (businessId && businessId !== user.businessId) updatedFields.push("Empresa"); // agrgado x fran
-      if (branchId && branchId !== user.branchId) updatedFields.push("Sucursal"); // agregado x fran
+      if (businessIdParsed && businessIdParsed !== user.businessId) updatedFields.push("Empresa");
+      if (branchIdParsed && branchIdParsed !== user.branchId) updatedFields.push("Sucursal");
       const updatedData = {
         fullName,
         email,
         phoneNumber,
         photo,
-        businessId,
-        branchId,
-      }; // businessId y branchId agrgados x fran
+        businessIdParsed,
+        branchIdParsed,
+      };
       await user.update(updatedData);
       if (updatedFields.length > 0) {
         const mailOptions = emailTemplates.userDetailsUpdated(
@@ -578,9 +585,12 @@ const userController = {
         );
         await transporter.sendMail(mailOptions);
       }
-      res.json({ message: "Usuario actualizado correctamente." });
-    } catch (error) {
-      console.error(error);
+      res.json({ 
+        message: "Usuario actualizado correctamente.",
+        data: updatedData
+      });
+    } 
+    catch (error) {
       res.status(500).json({ message: "Error al actualizar usuario." });
     }
   },
