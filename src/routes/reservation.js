@@ -2,7 +2,6 @@ import express from 'express';
 import reservationController from '../controllers/reservationController.js';
 import auth from '../middlewares/auth.js';
 import { checkOperatorRole, checkAdminRole, checkSuperRole } from '../middlewares/rolesMiddleware.js';
-import { checkDevEnv } from '../middlewares/envMiddleware.js';
 
 const router = express.Router();
 
@@ -15,7 +14,7 @@ router.get('/dashboard', auth, checkSuperRole, reservationController.getReservat
 router.put('/:id/cancel', auth, reservationController.cancelReservationById); //OK
 router.put('/:id/status', auth, checkOperatorRole, reservationController.updateReservationStatus);
 router.put('/:id', auth, checkSuperRole, reservationController.modifyReservation);
-router.delete('/:id', auth, checkSuperRole, checkDevEnv, reservationController.deleteReservation);
+router.delete('/:id', auth, checkSuperRole, reservationController.deleteReservation);
 router.get('/:id', auth, reservationController.getReservationById); //OK
 router.get('/', auth, checkSuperRole, reservationController.getAllReservations);
 router.post('/', auth, reservationController.createReservation); 

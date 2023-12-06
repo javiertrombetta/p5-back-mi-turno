@@ -1,5 +1,5 @@
 import cron from 'node-cron';
-import sequelize from './database.js';
+import Sequelize from 'sequelize';
 import Reservation from '../models/Reservation.js';
 import User from '../models/User.js';
 import { transporter } from './mailTransporter.js';
@@ -14,7 +14,7 @@ cron.schedule('0 0 * * *', async () => {
         where: {
           state: ['pendiente', 'confirmado'],
           date: {
-            [sequelize.Op.lt]: now
+            [Sequelize.Op.lt]: now
           }
         }
       }
@@ -32,8 +32,8 @@ cron.schedule('0 * * * *', async () => {
     const reservationsToRemind = await Reservation.findAll({
       where: {
         date: {
-          [sequelize.Op.gte]: now,
-          [sequelize.Op.lt]: oneDayAhead
+          [Sequelize.Op.gte]: now,
+          [Sequelize.Op.lt]: oneDayAhead
         },
         state: 'confirmado'
       },

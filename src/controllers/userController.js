@@ -513,56 +513,58 @@ const userController = {
   },
   updateUserByDni: async (req, res) => {
     const { dni } = req.params;
-    const { fullName, email, phoneNumber, role, businessId, branchId } =
-      req.body;
+    const { fullName, email, phoneNumber, role, businessId, branchId } = req.body;
     const photo = req.file;
     let updatedFields = [];
+
+    businessId = businessId ? parseInt(businessId, 10) : null;
+    branchId = branchId ? parseInt(branchId, 10) : null;
+
+    if (!dni) {
+      return res.status(400).json({ message: "DNI no proporcionado." });
+    }
     if (!validate.dni(dni)) {
       return res.status(400).json({ message: "El DNI es inválido." });
     }
-    if (fullName && !validate.name(fullName)) {
-      return res
-        .status(400)
-        .json({
-          message:
-            "El nombre completo no puede contener caracteres especiales.",
-        });
+    if (!fullName) {
+      return res.status(400).json({ message: "Nombre completo no proporcionado." });
     }
-    if (email && !validate.email(email)) {
-      return res
-        .status(400)
-        .json({ message: "Formato de correo electrónico no válido." });
+    if (!validate.name(fullName)) {
+      return res.status(400).json({ message: 'El nombre completo no puede contener caracteres especiales.' });
     }
-    if (phoneNumber && !validate.phone(phoneNumber)) {
-      return res
-        .status(400)
-        .json({ message: "El número de teléfono tiene que ser numérico." });
+    if (!email) {
+      return res.status(400).json({ message: "Email no proporcionado." });
     }
-    if (role && !validate.role(role)) {
+    if (!validate.email(email)) {
+      return res.status(400).json({ message: "Formato de correo electrónico no válido." });
+    }
+    if (!phoneNumber) {
+      return res.status(400).json({ message: "Número de teléfono no proporcionado" });
+    }
+    if (!validate.phone(phoneNumber)) {
+      return res.status(400).json({ message: "El número de teléfono tiene que ser numérico." });
+    }
+    if (!role) {
+      return res.status(400).json({ message: "Rol inválido" });
+    }
+    if (!validate.role(role)) {
       return res.status(400).json({ message: "El rol ingresado es inválido." });
-    }
+    }    
     if (photo && !validate.imageFormat(photo)) {
-      return res
-        .status(400)
-        .json({ message: "Formato de imagen inválido para la foto." });
+      return res.status(400).json({ message: "Formato de imagen inválido para la foto." });
     }
     try {
       const user = await User.findByPk(dni);
       if (!user) {
         return res.status(404).json({ message: "Usuario no encontrado." });
       }
-      if (fullName && fullName !== user.fullName)
-        updatedFields.push("Nombre Completo");
-      if (email && email !== user.email)
-        updatedFields.push("Correo Electrónico");
-      if (phoneNumber && phoneNumber !== user.phoneNumber)
-        updatedFields.push("Número de Teléfono");
+      if (fullName && fullName !== user.fullName) updatedFields.push("Nombre Completo");
+      if (email && email !== user.email) updatedFields.push("Correo Electrónico");
+      if (phoneNumber && phoneNumber !== user.phoneNumber) updatedFields.push("Número de Teléfono");
       if (role && role !== user.role) updatedFields.push("Rol");
       if (photo && photo !== user.photo) updatedFields.push("Foto");
-      if (businessId && businessId !== user.businessId)
-        updatedFields.push("Empresa"); // agrgado x fran
-      if (branchId && branchId !== user.branchId)
-        updatedFields.push("Sucursal"); // agregado x fran
+      if (businessId && businessId !== user.businessId) updatedFields.push("Empresa"); // agrgado x fran
+      if (branchId && branchId !== user.branchId) updatedFields.push("Sucursal"); // agregado x fran
       const updatedData = {
         fullName,
         email,
