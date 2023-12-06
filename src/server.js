@@ -7,11 +7,7 @@ import router from "./routes/index.js";
 import { config } from "dotenv";
 import './config/scheduleTasks.js';
 
-if (process.env.NODE_ENV === "production") {
-  config({ path: ".env.production" });
-} else {
-  config();
-}
+config();
 
 const forceSyncArg = process.argv[2];
 const forceSync = forceSyncArg === 'true';
@@ -29,11 +25,7 @@ server.use(express.urlencoded({ extended: true }));
 server.use("/", router);
 server.use((req, res, next, err) => {
   console.error(err);
-  if (process.env.NODE_ENV === "production") {
-    res.status(500).send("Internal Server Error");
-  } else {
-    res.status(500).send(err.message);
-  }
+  res.status(500).send(err.message);  
 });
 sequelize
   .sync({ force: forceSync })
