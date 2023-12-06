@@ -471,7 +471,9 @@ const userController = {
       if (phoneNumber && phoneNumber !== user.phoneNumber) updatedFields.push('Número de Teléfono');
       if (role && role !== user.role) updatedFields.push('Rol');
       if (photo && photo !== user.photo) updatedFields.push('Foto');
-      const updatedData = { fullName, email, phoneNumber, photo };
+      if (businessId && businessId !== user.businessId) updatedFields.push('Empresa'); // agrgado x fran
+      if (branchId && branchId !== user.branchId) updatedFields.push('Sucursal'); // agregado x fran
+      const updatedData = { fullName, email, phoneNumber, photo, businessId, branchId }; // businessId y branchId agrgados x fran
       await user.update(updatedData);
       if (updatedFields.length > 0) {
         const mailOptions = emailTemplates.userDetailsUpdated(user, updatedFields);
