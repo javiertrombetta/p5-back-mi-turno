@@ -23,10 +23,12 @@ const metrics = {
       const filteredTimes = peakTimesCounts
         .filter(pt => pt.branchId === branchId)
         .sort((a, b) => b.dataValues.count - a.dataValues.count);  
-      peakTimes[branchId] = filteredTimes.length > 0 ? filteredTimes[0].dataValues.hour : null;
+      peakTimes[branchId] = filteredTimes.length > 0 ? filteredTimes[0].dataValues.hour : "N/A";
     });  
     return peakTimes;
   },
+
+
   getAverageCancellations: async (branchIds, whereClause = {}) => {
     const totalReservations = await Reservation.count({
       where: {
