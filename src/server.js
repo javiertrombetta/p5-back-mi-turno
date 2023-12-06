@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import sequelize from "./config/database.js";
 import router from "./routes/index.js";
 import { config } from "dotenv";
+import './config/scheduleTasks.js';
 
 if (process.env.NODE_ENV === "production") {
   config({ path: ".env.production" });
