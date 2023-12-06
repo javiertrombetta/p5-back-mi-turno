@@ -120,6 +120,33 @@ const emailTemplates = {
     <p>Si no realizaste estos cambios, por favor comunicate inmediatamente con nuestro equipo de soporte.</p>
     <p>Saludos,</p>
     <p><b>Grupo 6 de Mi Turno Web App</b></p>
-  `)
+  `),
+  userQueryConfirmation: (user, message) => createEmailOptions(user.email, 'Confirmación de Consulta', `
+    <h3>Hola, ${user.fullName}</h3>
+    <p>Recibimos tu consulta y pronto te respondemos.</p>
+    <p>¡Gracias por contactarte con nosotros!</p>
+    <p>Saludos,</p>
+    <p><b>Grupo 6 de Mi Turno Web App</b></p>
+  `),
+  adminNotificationOfUserQuery: (adminEmail, user, message) => createEmailOptions(adminEmail, 'Nueva Consulta de Usuario', `
+    <h3>Nueva consulta de ${user.fullName} (${user.email})</h3>
+    <p>Consulta:</p>
+    <blockquote>${message}</blockquote>
+    <p>Responder a: <a href="mailto:${user.email}">${user.email}</a></p>
+    <p>Saludos,</p>
+    <p><b>Grupo 6 de Mi Turno Web App</b></p>
+  `),
+  reminderNotification: (user, reservationDetails) => createEmailOptions(user.email, 'Recordatorio de Reserva Próxima', `
+  <h3>Hola ${user.fullName},</h3>
+  <p>Te recordamos que tenés una reserva programada para:</p>
+  <ul>
+    <li>Fecha: ${reservationDetails.date}</li>
+    <li>Hora: ${reservationDetails.time}</li>
+    <li>Sucursal: ${reservationDetails.branchId}</li>
+  </ul>
+  <p>¡Te esperamos!</p>
+  <p>Saludos cordiales,</p>
+  <p><b>Grupo 6 de Mi Turno Web App</b></p>
+`),
 };
 export default emailTemplates;

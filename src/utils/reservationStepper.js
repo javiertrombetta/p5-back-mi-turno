@@ -20,18 +20,19 @@ const reservationStepper = {
     }
     return schedules;
   },
-  filterAvailableSchedules: (schedules, reservations, queryDate) => {
+  filterAvailableSchedules: (schedules, reservations, branchCapacity, queryDate) => {
     const queryDateFormatted = new Date(queryDate).toISOString().split('T')[0];
-  
+    
     const reservedTimes = reservations
-      .filter(reservation => {
-        const reservationDate = new Date(reservation.date);
-        return reservationDate.toISOString().split('T')[0] === queryDateFormatted;
-      })
-      .map(reservation => formatTime(reservation.time));
+      .filter(reservation => new Date(reservation.date).toISOString().split('T')[0] === queryDateFormatted)
+      .reduce((acc, reservation) => {
+        acc[reservation.time] = (acc[reservation.time] || 0) + 1;
+        return acc;
+      }, {});
   
     return schedules.filter(schedule => {
-      return !reservedTimes.includes(schedule);
+      const reservationCount = reservedTimes[schedule] || 0;
+      return reservationCount < branchCapacity;
     });
   },
   identifyCriticalSchedules: (schedules, reservations, date, criticalLimit = 2) => {
@@ -42,6 +43,25 @@ const reservationStepper = {
         return acc;
       }, {});
     return schedules.filter(schedule => reservationCounts[schedule] >= criticalLimit);
-  }
+  },
+  filterSchedulesByDate: (schedules, schedule, specificDates, queryDate) => {
+    const queryDay = new Date(queryDate).getDay();
+    const dayMapping = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+    const disabledHours = schedule
+      .filter(daySchedule => daySchedule.day === dayMapping[queryDay])
+      .flatMap(daySchedule => daySchedule.disabledHours);
+    let filteredSchedules = schedules.filter(scheduleTime => 
+      !disabledHours.some(disabledTime => 
+        scheduleTime >= disabledTime.split('-')[0] && scheduleTime < disabledTime.split('-')[1]
+      )
+    );
+    const isDateDisabled = specificDates
+      .some(dateObj => dateObj.date === queryDate && dateObj.isDisabled);
+
+    if (isDateDisabled) {
+      filteredSchedules = [];
+    }
+    return filteredSchedules;
+  },
 };
 export default reservationStepper;
