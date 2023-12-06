@@ -1,4 +1,4 @@
-const checkEnv = (env) => {
+/*const checkEnv = (env) => {
   return (req, res, next) => {
     if (process.env.NODE_ENV !== env) {
       return res.status(403).json({
@@ -10,4 +10,4 @@ const checkEnv = (env) => {
 };
 
 export const checkDevEnv = checkEnv("development");
-export const checkProdEnv = checkEnv("production");
+export const checkProdEnv = checkEnv("production");*/
