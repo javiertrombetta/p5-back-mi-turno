@@ -50,6 +50,18 @@ Branch.init(
         key: "id",
       },
     },
+    isEnable: {
+      type: Sequelize.BOOLEAN,
+      defaultValue: true,
+    },
+    schedule: {
+      type: Sequelize.JSON,
+      defaultValue: [],
+    },
+    specificDates: {
+      type: Sequelize.JSON,
+      defaultValue: [],
+    },
   },
   { sequelize: sequelize, modelName: "branches", timestamps: false }
 );

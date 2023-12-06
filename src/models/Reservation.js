@@ -40,6 +40,11 @@ Reservation.init(
       type: Sequelize.STRING,
       allowNull: false,
     },
+    qrToken: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      unique: true,
+    },
     branchId: {
       type: Sequelize.INTEGER,
       allowNull: false,
@@ -60,4 +65,15 @@ Reservation.init(
   { sequelize: sequelize, modelName: "reservations" }
 );
 
+Reservation.addHook('beforeCreate', async (reservation, options) => {
+  const existingReservation = await Reservation.findOne({
+    where: { qrToken: reservation.qrToken }
+  });
+  if (existingReservation) {
+    throw new Error('qrToken must be unique');
+  }
+});
+
 export default Reservation;
+
+
