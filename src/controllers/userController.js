@@ -125,7 +125,12 @@ const userController = {
         lastLogin: user.lastLogin,
       };
       const token = generateToken(payload);
-      res.cookie("token", token, { httpOnly: true });
+      res.cookie("token", token, {
+        httpOnly: true, 
+        secure: true,
+        sameSite: 'None',
+        maxAge: 3600000
+      });
       res.status(200).json({ payload, message: "Usuario logeado con éxito." });
     } catch (error) {
       console.error(error);
