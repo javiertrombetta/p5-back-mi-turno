@@ -4,7 +4,7 @@ import models from "../models/index.js";
 const { User, Reservation } = models;
 
 const metrics = {
-  getPeakTimes: async (branchIds) => {
+  getPeakTimes: async (branchIds, whereClause = {}) => {
     const peakTimesCounts = await Reservation.findAll({
       attributes: [
         'branchId',
@@ -12,111 +12,155 @@ const metrics = {
         [Sequelize.fn('count', Sequelize.col('id')), 'count']
       ],
       where: {
+        ...whereClause,
         branchId: branchIds,
-        state: ['confirmado', 'finalizado']
+        state: ['finalizado']
       },
       group: ['branchId', Sequelize.fn('date_part', 'hour', Sequelize.col('time'))]
-    });
-  
+    });  
     const peakTimes = {};
     branchIds.forEach(branchId => {
       const filteredTimes = peakTimesCounts
         .filter(pt => pt.branchId === branchId)
-        .sort((a, b) => b.dataValues.count - a.dataValues.count);
-  
+        .sort((a, b) => b.dataValues.count - a.dataValues.count);  
       peakTimes[branchId] = filteredTimes.length > 0 ? filteredTimes[0].dataValues.hour : null;
-    });
+    });  
     return peakTimes;
-  },  
-  getAverageCancellations: async (branchIds) => {
-    const totalReservations = await Reservation.findAll({
-      attributes: [
-        'branchId',
-        [Sequelize.fn('count', Sequelize.col('id')), 'totalCount']
-      ],
+  },
+  getAverageCancellations: async (branchIds, whereClause = {}) => {
+    const totalReservations = await Reservation.count({
       where: {
-        branchId: branchIds
+        branchId: branchIds,
+        ...whereClause
       },
       group: ['branchId']
     });
-    const cancellationCounts = await Reservation.findAll({
-      attributes: [
-        'branchId',
-        [Sequelize.fn('count', Sequelize.col('id')), 'cancelCount']
-      ],
+    const cancellationCounts = await Reservation.count({
       where: {
         branchId: branchIds,
-        state: 'cancelado'
+        state: 'cancelado',
+        ...whereClause
       },
       group: ['branchId']
     });  
     const averageCancellations = {};
     branchIds.forEach(branchId => {
-      const totalReservationsForBranch = totalReservations.find(r => r.get('branchId') === branchId)?.get('totalCount') || 0;
-      const cancellationsForBranch = cancellationCounts.find(c => c.get('branchId') === branchId)?.get('cancelCount') || 0;
-      averageCancellations[branchId] = totalReservationsForBranch > 0 ? (cancellationsForBranch / totalReservationsForBranch) : 0;
-    });  
+      const total = totalReservations.find(r => r.branchId === branchId)?.count || 0;
+      const cancellations = cancellationCounts.find(c => c.branchId === branchId)?.count || 0;
+      averageCancellations[branchId] = total > 0 ? (cancellations / total) : 0;
+    });
     return averageCancellations;
-  }, 
-  getOperatorCount: async (branchIds) => {
-    const operatorCounts = await User.count({
-      where: {
-        role: 'oper',
-        branchId: branchIds
-      },
-      group: ['branchId']
-    });  
-    const operatorCountResult = {};
-    branchIds.forEach(branchId => {
-      const branchOperatorCount = operatorCounts.find(count => count.branchId === branchId);
-      operatorCountResult[branchId] = branchOperatorCount ? branchOperatorCount.count : 0;
-    });  
-    return operatorCountResult;
-  },
-  getTotalReservationsByBranch: async (branchIds) => {
+  },  
+  getTotalReservationsByBranch: async (branchIds, whereClause = {}) => {
     const totalReservationsCounts = await Reservation.count({
       where: {
-        branchId: branchIds
+        branchId: branchIds,
+        ...whereClause
       },
       group: ['branchId']
-    });
-
+    });  
     const totalReservations = {};
     branchIds.forEach(branchId => {
-      const branchTotalReservations = totalReservationsCounts.find(tr => tr.branchId === branchId)?.count || 0;
-      totalReservations[branchId] = branchTotalReservations;
+      const count = totalReservationsCounts.find(tr => tr.branchId === branchId)?.count || 0;
+      totalReservations[branchId] = count;
     });
     return totalReservations;
-  },
-  getTotalCancellationsByBranch: async (branchIds) => {
+  },  
+  getTotalCancellationsByBranch: async (branchIds, whereClause = {}) => {
     const totalCancellationsCounts = await Reservation.count({
       where: {
         branchId: branchIds,
-        state: 'cancelado'
+        state: 'cancelado',
+        ...whereClause
       },
       group: ['branchId']
     });  
     const totalCancellations = {};
     branchIds.forEach(branchId => {
-      const branchTotalCancellations = totalCancellationsCounts.find(tc => tc.branchId === branchId)?.count || 0;
-      totalCancellations[branchId] = branchTotalCancellations;
+      const count = totalCancellationsCounts.find(tc => tc.branchId === branchId)?.count || 0;
+      totalCancellations[branchId] = count;
     });
     return totalCancellations;
-  },
-  getTotalAttendancesByBranch: async (branchIds) => {
+  },  
+  getTotalAttendancesByBranch: async (branchIds, whereClause = {}) => {
     const totalAttendancesCounts = await Reservation.count({
       where: {
         branchId: branchIds,
-        state: 'finalizado'
+        state: 'finalizado',
+        ...whereClause
       },
       group: ['branchId']
     });  
     const totalAttendances = {};
     branchIds.forEach(branchId => {
-      const branchTotalAttendances = totalAttendancesCounts.find(ta => ta.branchId === branchId)?.count || 0;
-      totalAttendances[branchId] = branchTotalAttendances;
+      const count = totalAttendancesCounts.find(ta => ta.branchId === branchId)?.count || 0;
+      totalAttendances[branchId] = count;
     });
     return totalAttendances;
+  },  
+  getTotalPendingByBranch: async (branchIds, whereClause = {}) => {
+    const totalPendingCounts = await Reservation.count({
+      where: {
+        branchId: branchIds,
+        state: 'pendiente',
+        ...whereClause
+      },
+      group: ['branchId']
+    });  
+    const totalPending = {};
+    branchIds.forEach(branchId => {
+      const count = totalPendingCounts.find(tp => tp.branchId === branchId)?.count || 0;
+      totalPending[branchId] = count;
+    });
+    return totalPending;
+  },  
+  getTotalConfirmedByBranch: async (branchIds, whereClause = {}) => {
+    const totalConfirmedCounts = await Reservation.count({
+      where: {
+        branchId: branchIds,
+        state: 'confirmado',
+        ...whereClause
+      },
+      group: ['branchId']
+    });  
+    const totalConfirmed = {};
+    branchIds.forEach(branchId => {
+      const count = totalConfirmedCounts.find(tc => tc.branchId === branchId)?.count || 0;
+      totalConfirmed[branchId] = count;
+    });
+    return totalConfirmed;
+  },  
+  getTotalFinishedByBranch: async (branchIds, whereClause = {}) => {
+    const totalFinishedCounts = await Reservation.count({
+      where: {
+        branchId: branchIds,
+        state: 'finalizado',
+        ...whereClause
+      },
+      group: ['branchId']
+    });  
+    const totalFinished = {};
+    branchIds.forEach(branchId => {
+      const count = totalFinishedCounts.find(tf => tf.branchId === branchId)?.count || 0;
+      totalFinished[branchId] = count;
+    });
+    return totalFinished;
+  },  
+  getTotalNoShowByBranch: async (branchIds, whereClause = {}) => {
+    const totalNoShowCounts = await Reservation.count({
+      where: {
+        branchId: branchIds,
+        state: 'ausente',
+        ...whereClause
+      },
+      group: ['branchId']
+    });  
+    const totalNoShow = {};
+    branchIds.forEach(branchId => {
+      const count = totalNoShowCounts.find(tns => tns.branchId === branchId)?.count || 0;
+      totalNoShow[branchId] = count;
+    });
+    return totalNoShow;
   },
 };
 export default metrics;
