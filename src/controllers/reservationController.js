@@ -219,14 +219,12 @@ const reservationController = {
     }
   },  
   getReservationMetrics: async (req, res) => {
-    // const userRole = req.user.role;
-    const userRole = 'super';
+    const userRole = req.user.role;
     let branchIds;  
     try {
       if (userRole === 'user') {
         return res.status(403).json({ message: 'Acceso no autorizado.' });
-      }
-  
+      }  
       if (userRole === 'super') {
         const allBranches = await Branch.findAll({ attributes: ['id'] });
         branchIds = allBranches.map(branch => branch.id);
@@ -235,21 +233,24 @@ const reservationController = {
         const businessId = req.user.businessId;
         if (!businessId || !validate.id(businessId)) {
           return res.status(400).json({ message: 'Información de empresa inválida.' });
-        }
-  
+        }  
         const branches = await Branch.findAll({
           where: { businessId: businessId },
           attributes: ['id']
         });
         branchIds = branches.map(branch => branch.id);
-      }  
+      }      
       const metrics = {
         peakTimes: await dashboard.getPeakTimes(branchIds),
         averageCancellations: await dashboard.getAverageCancellations(branchIds),
         operatorCount: await dashboard.getOperatorCount(branchIds),
         totalReservations: await dashboard.getTotalReservationsByBranch(branchIds),
         totalCancellations: await dashboard.getTotalCancellationsByBranch(branchIds),
-        totalAttendances: await dashboard.getTotalAttendancesByBranch(branchIds)
+        totalAttendances: await dashboard.getTotalAttendancesByBranch(branchIds),
+        totalPending: await dashboard.getTotalPendingByBranch(branchIds),
+        totalConfirmed: await dashboard.getTotalConfirmedByBranch(branchIds),
+        totalFinished: await dashboard.getTotalFinishedByBranch(branchIds),
+        totalNoShow: await dashboard.getTotalNoShowByBranch(branchIds)
       };  
       res.json({ metrics });
     }
@@ -257,8 +258,33 @@ const reservationController = {
       console.error(error);
       res.status(500).json({ error: error.message });
     }
-  },
+  },  
+  getReservationMetricsById: async (req, res) => {
+    const branchId = parseInt(req.params.id, 10);
+    try {
+      if (isNaN(branchId)) {
+        return res.status(400).json({ message: "ID de sucursal inválido." });
+      }  
+      const metrics = {
+        peakTimes: await dashboard.getPeakTimes([branchId]),
+        averageCancellations: await dashboard.getAverageCancellations([branchId]),
+        operatorCount: await dashboard.getOperatorCount([branchId]),
+        totalReservations: await dashboard.getTotalReservationsByBranch([branchId]),
+        totalCancellations: await dashboard.getTotalCancellationsByBranch([branchId]),
+        totalAttendances: await dashboard.getTotalAttendancesByBranch([branchId]),
+        totalPending: await dashboard.getTotalPendingByBranch([branchId]),
+        totalConfirmed: await dashboard.getTotalConfirmedByBranch([branchId]),
+        totalFinished: await dashboard.getTotalFinishedByBranch([branchId]),
+        totalNoShow: await dashboard.getTotalNoShowByBranch([branchId])
+      };
   
+      res.json({ metrics });
+    } 
+    catch (error) {
+      console.error(error);
+      res.status(500).json({ error: error.message });
+    }
+  },  
   getAllReservations: async (req, res) => {
     try {
       const allReservations = await Reservation.findAll({
@@ -323,7 +349,7 @@ const reservationController = {
                     attributes: ['name', 'email', 'phoneNumber', 'address', 'capacity', 'openingTime', 'closingTime', 'turnDuration'],
                 }
             ],
-            attributes: ['id', 'date', 'time', 'state', 'clientName', 'clientPhone', 'clientEmail', 'userId']
+            attributes: ['id', 'date', 'time', 'state', 'clientName', 'clientPhone', 'clientEmail','qrToken','userId']
         });
 
         if (!reservation) {

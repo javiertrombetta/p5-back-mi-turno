@@ -10,7 +10,8 @@ router.put('/qr/:qrToken/status', auth, checkOperatorRole, reservationController
 router.get('/qr/:qrToken', auth, reservationController.getReservationByQrToken);
 router.get('/me', auth, reservationController.getUserReservations); //OK
 router.get('/branch', auth, checkOperatorRole, reservationController.getBranchReservations);
-router.get('/dashboard', auth, checkAdminRole, reservationController.getReservationMetrics); //OK
+router.get('/dashboard/:id', auth, checkAdminRole, reservationController.getReservationMetricsById);
+router.get('/dashboard', auth, checkSuperRole, reservationController.getReservationMetrics);
 router.put('/:id/cancel', auth, reservationController.cancelReservationById); //OK
 router.put('/:id/status', auth, checkOperatorRole, reservationController.updateReservationStatus);
 router.put('/:id', auth, checkSuperRole, reservationController.modifyReservation);

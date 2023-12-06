@@ -440,7 +440,7 @@ const userController = {
   },
   updateUserByDni: async (req, res) => {
     const { dni } = req.params;
-    const { fullName, email, phoneNumber, role } = req.body;
+    const { fullName, email, phoneNumber, role, businessId, branchId } = req.body;
     const photo = req.file;
     let updatedFields = [];    
     if (!validate.dni(dni)) {
