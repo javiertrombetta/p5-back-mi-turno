@@ -192,7 +192,7 @@ const branchesController = {
       return res.status(400).json({ message: "Id de sucursal inválido." });
     }
     try {
-      if (req.user.role !== 'admin' || req.user.businessId !== parseInt(businessId)) {
+      if (req.user.role !== 'super') {
         return res.status(403).json({ message: "No autorizado para acceder a esta información." });
       }
       const branches = await Branch.findAll({
