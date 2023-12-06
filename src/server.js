@@ -24,7 +24,8 @@ server.use(morgan("tiny"));
 server.use(express.urlencoded({ extended: true }));
 server.use("/", router);
 server.use((req, res, next, err) => {
-  console.error(err);  
+  console.error(err);
+  res.status(500).send(err.message);  
 });
 sequelize
   .sync({ force: forceSync })
