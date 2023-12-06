@@ -286,8 +286,10 @@ const reservationController = {
     }
   },  
   getAllReservations: async (req, res) => {
-    try {
-      const allReservations = await Reservation.findAll({
+    try {     
+      const userRole = req.user.role;
+      const userBusinessId = req.user.businessId;  
+      let queryOptions = {
         include: [
           {
             model: User,
@@ -303,14 +305,21 @@ const reservationController = {
           }
         ],
         attributes: ['id', 'date', 'time', 'state', 'clientName', 'clientPhone', 'clientEmail']
-      });
+      };
+      if (userRole === 'admin') {
+        queryOptions.include[1].where = { businessId: userBusinessId };
+      } else if (userRole !== 'super') {    
+        return res.status(403).json({ error: 'Usuario no autorizado' });
+      }  
+      const allReservations = await Reservation.findAll(queryOptions);
       const formattedReservations = formatData.formatReservationData(allReservations);
-      res.status(200).json(formattedReservations);
-    } catch (error) {
+      res.status(200).json(formattedReservations);  
+    }
+    catch (error) {
       console.error(error);
       res.status(500).json({ error: error.message });
     }
-  },
+  },  
   getReservationById: async (req, res) => {
     const reservationId = req.params.id;
     const userId = req.user.dni;
