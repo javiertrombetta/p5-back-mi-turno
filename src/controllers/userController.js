@@ -9,7 +9,7 @@ import emailTemplates from "../utils/emailTemplates.js";
 const { User, Branch, Business, Reservation } = models;
 const userController = {
   register: async (req, res) => {
-    const { fullName, dni, email, phoneNumber, password } = req.body;
+    const { fullName, dni, email, phoneNumber, password, confirmPassword } = req.body;
     if (!fullName) {
       return res
         .status(400)
@@ -64,6 +64,9 @@ const userController = {
           "✓ 1 número.\n" +
           "✓ 8 caracteres de largo.",
       });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Las contraseñas no coinciden." });
     }
     try {
       const userExist = await User.findOne({ where: { dni } });
