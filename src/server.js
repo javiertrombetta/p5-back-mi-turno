@@ -17,11 +17,11 @@ const corsOrigin = process.env.CORS_ORIGIN || "http://localhost:3001";
 const serverHost = process.env.SERVER_HOST || "http://localhost:3000";
 const serverPort = process.env.SERVER_PORT || 3000;
 
-server.use( cors({ origin: corsOrigin, credentials: true }) );
 server.use(cookieParser());
 server.use(express.json());
 server.use(morgan("tiny"));
 server.use(express.urlencoded({ extended: true }));
+server.use( cors({ origin: corsOrigin, credentials: true }) );
 server.use("/", router);
 server.use((req, res, next, err) => {
   console.error(err);
