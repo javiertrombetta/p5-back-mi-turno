@@ -252,13 +252,13 @@ const reservationController = {
       }
       if (
         req.user.role === 'oper' &&
-        reservation.branchId !== req.user.BranchId
+        reservation.branchId !== req.user.branchId
       ) {
         return res.status(403).json({ message: 'Acceso denegado.' });
       }
       if (req.user.role === 'admin') {
         const isAdminBranch = req.user.Business.Branches.some(
-          (branch) => branch.id === reservation.BranchId
+          (branch) => branch.id === reservation.branchId
         );
         if (!isAdminBranch) {
           return res.status(403).json({ message: 'Acceso denegado.' });

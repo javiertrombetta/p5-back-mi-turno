@@ -24,7 +24,7 @@ router.put("/:dni/depromote", auth, checkAdminRole, userController.depromoteOper
 router.get("/oper", auth, checkAdminRole, userController.getAllOpersByBusiness);
 //Super
 router.post("/:dni/reset-password", auth, checkSuperRole, userController.adminResetPassword);
-router.post("/:dni/assign-role", auth, checkSuperRole, userController.assignRoleToUser);
+router.post("/:dni/assign-role", auth, checkAdminRole, userController.assignRoleToUser);
 router.post("/", auth, checkSuperRole, userController.createUser);
 router.put("/:dni", auth, checkSuperRole, upload.single("photo"), userController.updateUserByDni);
 router.get("/:dni", auth, checkAdminRole, userController.getUserByDni);
