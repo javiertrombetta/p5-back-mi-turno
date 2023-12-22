@@ -56,7 +56,12 @@ router.delete(
   reservationController.deleteReservation
 );
 router.get('/:id', auth, reservationController.getReservationById); //OK
-router.get('/', auth, checkSuperRole, reservationController.getAllReservations);
+router.get(
+  '/',
+  auth,
+  checkOperatorRole,
+  reservationController.getAllReservations
+);
 router.post('/', auth, reservationController.createReservation);
 
 export default router;
