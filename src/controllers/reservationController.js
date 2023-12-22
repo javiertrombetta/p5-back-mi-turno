@@ -443,7 +443,7 @@ const reservationController = {
           'clientEmail',
         ],
       };
-      if (userRole === 'admin') {
+      if (userRole === 'admin' || userRole === 'oper') {
         queryOptions.include[1].where = { businessId: userBusinessId };
       } else if (userRole !== 'super') {
         return res.status(403).json({ error: 'Usuario no autorizado' });
