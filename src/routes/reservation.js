@@ -1,6 +1,8 @@
 import express from 'express';
 import reservationController from '../controllers/reservationController.js';
+import { getBranchesByBusinessId } from '../controllers/branchController.js';
 import auth from '../middlewares/auth.js';
+
 import {
   checkOperatorRole,
   checkAdminRole,
@@ -23,6 +25,12 @@ router.get(
   auth,
   checkOperatorRole,
   reservationController.getBranchReservations
+);
+router.get(
+  '/business/:businessId/branches',
+  auth,
+  checkSuperRole,
+  getBranchesByBusinessId
 );
 router.get(
   '/dashboard/:id',

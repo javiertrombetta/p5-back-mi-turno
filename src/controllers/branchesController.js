@@ -20,7 +20,9 @@ const branchesController = {
       isEnable,
       schedule,
       specificDates,
+      businessId,
     } = req.body;
+    console.log('REQBODY', req.body);
     if (!name) {
       return res.status(400).json({ message: 'El nombre es obligatorio.' });
     }
@@ -109,6 +111,7 @@ const branchesController = {
           'Formato de fechas específicas inválido. Asegúrese de que las fechas y los estados sean válidos.',
       });
     }
+
     try {
       const newBranch = await Branch.create({
         name,
@@ -122,6 +125,7 @@ const branchesController = {
         isEnable: isEnable ?? true,
         schedule: schedule ?? [],
         specificDates: specificDates ?? [],
+        businessId,
       });
       res.status(201).json(newBranch);
     } catch (error) {
@@ -131,6 +135,7 @@ const branchesController = {
   },
   updateBranch: async (req, res) => {
     const branchId = req.params.id;
+    console.log('BranchID', branchId);
     const {
       name,
       email,
@@ -259,10 +264,10 @@ const branchesController = {
     if (!businessId) {
       return res
         .status(400)
-        .json({ message: 'Id de sucursal no proporcionado.' });
+        .json({ message: 'Id de empresa no proporcionado.' });
     }
     if (!validate.id(businessId)) {
-      return res.status(400).json({ message: 'Id de sucursal inválido.' });
+      return res.status(400).json({ message: 'Id de empresa inválido.' });
     }
     try {
       if (req.user.role !== 'super' && req.user.role !== 'admin') {
@@ -270,6 +275,7 @@ const branchesController = {
           .status(403)
           .json({ message: 'No autorizado para acceder a esta información.' });
       }
+
       const branches = await Branch.findAll({
         where: { businessId: businessId },
         attributes: [
@@ -286,12 +292,20 @@ const branchesController = {
           'schedule',
           'specificDates',
         ],
+        include: [
+          {
+            model: Business,
+            attributes: ['id', 'name'],
+          },
+        ],
       });
+
       if (branches.length === 0) {
         return res.status(404).json({
           message: 'No se encontraron sucursales para la empresa indicada.',
         });
       }
+
       res.json(branches);
     } catch (error) {
       console.error(error);
@@ -408,7 +422,7 @@ const branchesController = {
         ],
         include: {
           model: Business,
-          attributes: ['name', 'email', 'phoneNumber', 'address'],
+          attributes: ['name', 'email', 'phoneNumber', 'address', 'id'],
         },
       });
       if (!branch) {
