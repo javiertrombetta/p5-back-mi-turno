@@ -1,5 +1,5 @@
-import Sequelize from "sequelize";
-import sequelize from "../config/database.js";
+import Sequelize from 'sequelize';
+import sequelize from '../config/database.js';
 
 class Business extends Sequelize.Model {}
 
@@ -25,7 +25,7 @@ Business.init(
       allowNull: false,
     },
   },
-  { sequelize: sequelize, modelName: "businesses" }
+  { sequelize: sequelize, modelName: 'businesses' }
 );
 
 export default Business;
