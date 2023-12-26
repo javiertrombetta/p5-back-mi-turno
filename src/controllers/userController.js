@@ -9,7 +9,7 @@ import emailTemplates from "../utils/emailTemplates.js";
 const { User, Branch, Business, Reservation } = models;
 const userController = {
   register: async (req, res) => {
-    const { fullName, dni, email, phoneNumber, password } = req.body;
+    const { fullName, dni, email, phoneNumber, password, confirmPassword } = req.body;
     if (!fullName) {
       return res
         .status(400)
@@ -64,6 +64,9 @@ const userController = {
           "✓ 1 número.\n" +
           "✓ 8 caracteres de largo.",
       });
+    }
+    if (password !== confirmPassword) {
+      return res.status(400).json({ message: "Las contraseñas no coinciden." });
     }
     try {
       const userExist = await User.findOne({ where: { dni } });
@@ -517,11 +520,10 @@ const userController = {
     const { dni } = req.params;
     const { fullName, email, phoneNumber, role, businessId, branchId } = req.body;
     const photo = req.file;
-    let updatedFields = [];
-    console.log(businessId)
-    console.log(branchId)
-   // const businessIdParsed = businessId ? parseInt(businessId, 10) : null;
-   // const branchIdParsed = branchId ? parseInt(branchId, 10) : null;
+    let updatedFields = []; 
+
+    const businessIdParsed = businessId ? Number(businessId) : null;
+    const branchIdParsed = branchId ? Number(branchId) : null;
 
     if (!dni) {
       return res.status(400).json({ message: "DNI no proporcionado." });
@@ -549,13 +551,7 @@ const userController = {
     }
     if (!role) {
       return res.status(400).json({ message: "Rol inválido" });
-    }
-    /*if (businessId && isNaN(businessIdParsed)) {
-      return res.status(400).json({ message: "El ID de la empresa debe ser un número." });
     }    
-    if (branchId && isNaN(branchIdParsed)) {
-      return res.status(400).json({ message: "El ID de la sucursal debe ser un número." });
-    }*/
     if (!validate.role(role)) {
       return res.status(400).json({ message: "El rol ingresado es inválido." });
     }    
@@ -578,9 +574,10 @@ const userController = {
         fullName,
         email,
         phoneNumber,
-        photo,
-        businessIdParsed,
-        branchIdParsed,
+        role,
+        photo,     
+        businessId: businessIdParsed,
+        branchId: branchIdParsed,
       };
       await user.update(updatedData);
       if (updatedFields.length > 0) {
@@ -596,6 +593,7 @@ const userController = {
       });
     } 
     catch (error) {
+      console.log(error)
       res.status(500).json({ message: "Error al actualizar usuario." });
     }
   },

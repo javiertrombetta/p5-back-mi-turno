@@ -1,5 +1,5 @@
-import Sequelize from "sequelize";
-import sequelize from "../config/database.js";
+import Sequelize from 'sequelize';
+import sequelize from '../config/database.js';
 
 class Branch extends Sequelize.Model {}
 
@@ -45,9 +45,10 @@ Branch.init(
     },
     businessId: {
       type: Sequelize.INTEGER,
+      allowNull: false,
       references: {
-        model: "businesses",
-        key: "id",
+        model: 'businesses',
+        key: 'id',
       },
     },
     isEnable: {
@@ -63,7 +64,7 @@ Branch.init(
       defaultValue: [],
     },
   },
-  { sequelize: sequelize, modelName: "branches", timestamps: false }
+  { sequelize: sequelize, modelName: 'branches', timestamps: false }
 );
 
 export default Branch;
